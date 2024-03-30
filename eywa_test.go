@@ -23,10 +23,10 @@ func TestSelect(t *testing.T) {
 			"x-hasura-access-key": accessKey,
 		},
 	)
-	resp, err := c.Select(&s)
-	expectedResp := []testTable{{Name: "abcdefgh"}}
+	resp, err := Select(c, &s)
+	expectedResp := []*testTable{{Name: "abcdefgh"}}
 
 	if assert.NoError(t, err) {
-		assert.Equal(t, resp, expectedResp)
+		assert.Equal(t, expectedResp, resp)
 	}
 }

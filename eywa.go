@@ -39,8 +39,7 @@ type graphqlError struct {
 
 const selectQueryFormat string = "query Get {%s {%s}}"
 
-func (c *Client) Select(model Model) (interface{}, error) {
-	modelType := reflect.TypeOf(model).Elem()
+func Select[T Model](client *Client, model T) ([]T, error) {
 	modelFields := reflect.VisibleFields(reflect.TypeOf(model).Elem())
 
 	var queryFields []string
@@ -58,32 +57,31 @@ func (c *Client) Select(model Model) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, c.endpoint, &reqBytes)
+	req, err := http.NewRequest(http.MethodPost, client.endpoint, &reqBytes)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Add("Content-Type", "application/json")
-	for key, value := range c.headers {
+	for key, value := range client.headers {
 		req.Header.Add(key, value)
 	}
-	resp, err := c.httpClient.Do(req)
+	resp, err := client.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	type graphqlResponse struct {
-		Data   interface{}    `json:"data"`
+		Data   map[string][]T `json:"data"`
 		Errors []graphqlError `json:"errors"`
 	}
-	respDataMap := reflect.New(reflect.MapOf(reflect.TypeOf(""), reflect.SliceOf(modelType)))
 
-	respObj := graphqlResponse{Data: respDataMap.Interface()}
+	respObj := graphqlResponse{}
 
 	err = json.NewDecoder(resp.Body).Decode(&respObj)
 	if err != nil {
 		return nil, err
 	}
+	return respObj.Data[model.ModelName()], nil
 
-	return respDataMap.Elem().MapIndex(reflect.ValueOf(model.ModelName())).Interface(), nil
 }
