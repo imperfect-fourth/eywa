@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"reflect"
 	"strings"
 )
 
@@ -60,32 +59,58 @@ type Model interface {
 type query[T Model] struct {
 	operationName string
 	selectFields  []string
-	whereClause   string
-	limitClause   string
-	orderByClause string
+
+	queryModifier map[string]interface{}
 
 	model T
 }
 
-func Query[T Model](model T, opts ...queryOption[T]) *query[T] {
+func Query[T Model](model T) *query[T] {
 	q := &query[T]{
 		operationName: "Get",
 		model:         model,
-	}
-	for _, opt := range opts {
-		opt(q)
+		queryModifier: map[string]interface{}{},
 	}
 	return q
 }
 
-func (q *query[T]) Select(fields []string) *query[T] {
+func (q *query[T]) Select(fields ...string) *query[T] {
 	q.selectFields = fields
 	return q
 }
 
+func (q *query[T]) Limit(n int) *query[T] {
+	q.queryModifier["limit"] = n
+	return q
+}
+
+func (q *query[T]) build() string {
+	baseQueryFormat := "query %s {%s%s {%s}}"
+
+	modifierClause := ""
+	for k, v := range q.queryModifier {
+		if modifierClause == "" {
+			modifierClause = fmt.Sprintf("(%s: %v", k, v)
+		} else {
+			modifierClause = fmt.Sprintf("%s, %s: %v", modifierClause, k, v)
+		}
+	}
+	if modifierClause != "" {
+		modifierClause = modifierClause + ")"
+	}
+
+	gql := fmt.Sprintf(
+		baseQueryFormat,
+		q.operationName,
+		q.model.ModelName(),
+		modifierClause,
+		strings.Join(q.selectFields, "\n"),
+	)
+	return gql
+}
+
 func (q *query[T]) Exec(client *Client) ([]T, error) {
-	queryFormat := "query %s {%s {%s}}"
-	respBytes, err := client.do(fmt.Sprintf(queryFormat, q.operationName, q.model.ModelName(), strings.Join(q.selectFields, "\n")))
+	respBytes, err := client.do(q.build())
 
 	type graphqlResponse struct {
 		Data   map[string][]T `json:"data"`
@@ -101,20 +126,6 @@ func (q *query[T]) Exec(client *Client) ([]T, error) {
 	return respObj.Data[q.model.ModelName()], nil
 }
 
-type queryOption[T Model] func(*query[T])
-
-func WithOperationName[T Model](oprnName string) queryOption[T] {
-	return func(q *query[T]) {
-		q.operationName = oprnName
-	}
-}
-
-func SelectFields[T Model](fields []string) queryOption[T] {
-	return func(q *query[T]) {
-		q.selectFields = fields
-	}
-}
-
 type graphqlRequest struct {
 	Query     string                 `json:"query"`
 	Variables map[string]interface{} `json:"variables"`
@@ -123,53 +134,4 @@ type graphqlRequest struct {
 type graphqlError struct {
 	Message    string                 `json:"message"`
 	Extensions map[string]interface{} `json:"extensions"`
-}
-
-const selectQueryFormat string = "query Get {%s {%s}}"
-
-func Select[T Model](client *Client, model T) ([]T, error) {
-	modelFields := reflect.VisibleFields(reflect.TypeOf(model).Elem())
-
-	var queryFields []string
-	for _, field := range modelFields {
-		queryFields = append(queryFields, field.Tag.Get("graphql"))
-	}
-	query := fmt.Sprintf(selectQueryFormat, model.ModelName(), strings.Join(queryFields, "\n"))
-
-	reqObj := graphqlRequest{
-		Query: query,
-	}
-
-	var reqBytes bytes.Buffer
-	err := json.NewEncoder(&reqBytes).Encode(&reqObj)
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequest(http.MethodPost, client.endpoint, &reqBytes)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Content-Type", "application/json")
-	for key, value := range client.headers {
-		req.Header.Add(key, value)
-	}
-	resp, err := client.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	type graphqlResponse struct {
-		Data   map[string][]T `json:"data"`
-		Errors []graphqlError `json:"errors"`
-	}
-
-	respObj := graphqlResponse{}
-
-	err = json.NewDecoder(resp.Body).Decode(&respObj)
-	if err != nil {
-		return nil, err
-	}
-	return respObj.Data[model.ModelName()], nil
-
 }
