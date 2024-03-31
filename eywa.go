@@ -84,6 +84,41 @@ func (q *query[T]) Limit(n int) *query[T] {
 	return q
 }
 
+func (q *query[T]) DistinctOn(field string) *query[T] {
+	q.queryModifier["distinct_on"] = field
+	return q
+}
+
+type OrderByEnum string
+
+const (
+	OrderAsc            OrderByEnum = "asc"
+	OrderAscNullsFirst  OrderByEnum = "asc_nulls_first"
+	OrderAscNullsLast   OrderByEnum = "asc_nulls_last"
+	OrderDesc           OrderByEnum = "desc"
+	OrderDescNullsFirst OrderByEnum = "desc_nulls_first"
+	OrderDescNullsLast  OrderByEnum = "desc_nulls_last"
+)
+
+func (q *query[T]) OrderBy(orderBys map[string]OrderByEnum) *query[T] {
+	orderByClause := ""
+	for k, v := range orderBys {
+		if orderByClause == "" {
+			orderByClause = fmt.Sprintf("{%s: %s", k, v)
+		} else {
+			orderByClause = fmt.Sprintf("%s, %s: %s", orderByClause, k, v)
+		}
+	}
+	orderByClause += "}"
+	q.queryModifier["order_by"] = orderByClause
+	return q
+}
+
+func (q *query[T]) Where(where string) *query[T] {
+	q.queryModifier["where"] = where
+	return q
+}
+
 func (q *query[T]) build() string {
 	baseQueryFormat := "query %s {%s%s {%s}}"
 
