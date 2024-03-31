@@ -114,8 +114,8 @@ func (q *query[T]) OrderBy(orderBys map[string]OrderByEnum) *query[T] {
 	return q
 }
 
-func (q *query[T]) Where(where string) *query[T] {
-	q.queryModifier["where"] = where
+func (q *query[T]) Where(where *WhereExpr) *query[T] {
+	q.queryModifier["where"] = where.build()
 	return q
 }
 
@@ -169,4 +169,78 @@ type graphqlRequest struct {
 type graphqlError struct {
 	Message    string                 `json:"message"`
 	Extensions map[string]interface{} `json:"extensions"`
+}
+
+type Comparator string
+
+const (
+	Eq  Comparator = "_eq"
+	Neq Comparator = "_new"
+	Gt  Comparator = "_gt"
+	Gte Comparator = "_gte"
+	Lt  Comparator = "_lt"
+	Lte Comparator = "_lte"
+)
+
+type Comparison map[string]map[Comparator]interface{}
+
+type WhereExpr struct {
+	And         []*WhereExpr
+	Or          []*WhereExpr
+	Not         *WhereExpr
+	Comparisons Comparison
+}
+
+func (w *WhereExpr) build() string {
+	if w == nil {
+		return ""
+	}
+	if (w == &WhereExpr{}) {
+		return "{}"
+	}
+	var exprArr []string
+
+	andExprArr := make([]string, 0, len(w.And))
+	for _, andExprElem := range w.And {
+		andExprBuild := andExprElem.build()
+		if andExprBuild != "" {
+			andExprArr = append(andExprArr, andExprBuild)
+		}
+	}
+	andExpr := strings.Join(andExprArr, ", ")
+	if andExpr != "" {
+		exprArr = append(exprArr, fmt.Sprintf("_and: [%s]", andExpr))
+	}
+
+	orExprArr := make([]string, 0, len(w.Or))
+	for _, orExprElem := range w.Or {
+		orExprBuild := orExprElem.build()
+		if orExprBuild != "" {
+			orExprArr = append(orExprArr, orExprBuild)
+		}
+	}
+	orExpr := strings.Join(orExprArr, ", ")
+	if orExpr != "" {
+		exprArr = append(exprArr, fmt.Sprintf("_or: [%s]", orExpr))
+	}
+
+	notExpr := w.Not.build()
+	if notExpr != "" {
+		exprArr = append(exprArr, fmt.Sprintf("_not: %s", notExpr))
+	}
+
+	for field, cmprs := range w.Comparisons {
+		cmpExprArr := make([]string, 0, len(cmprs))
+		for cmpr, val := range cmprs {
+			if val == nil {
+				cmpExprArr = append(cmpExprArr, fmt.Sprintf("%s: null", cmpr))
+			} else {
+				cmpExprArr = append(cmpExprArr, fmt.Sprintf("%s: %v", cmpr, val))
+			}
+		}
+		exprArr = append(exprArr, fmt.Sprintf("%s: {%s}", field, strings.Join(cmpExprArr, ", ")))
+	}
+
+	expr := fmt.Sprintf("{%s}", strings.Join(exprArr, ", "))
+	return expr
 }

@@ -93,7 +93,27 @@ func TestQueryWhere(t *testing.T) {
 		},
 	)
 
-	resp, err := Query(&s).Select("name", "age").Where(`{_or: [{name: {_eq: "abc"}}, {age: {_eq: 12}}]}`).Exec(c)
+	//	resp, err := Query(&s).Select("name", "age").Where(`{_or: [{name: {_eq: "abc"}}, {age: {_eq: 12}}]}`).Exec(c)
+	resp, err := Query(&s).Select("name", "age").Where(
+		&WhereExpr{
+			Or: []*WhereExpr{
+				{
+					Comparisons: Comparison{
+						"name": {
+							Eq: "abc",
+						},
+					},
+				},
+				{
+					Comparisons: Comparison{
+						"age": {
+							Eq: 12,
+						},
+					},
+				},
+			},
+		},
+	).Exec(c)
 	expectedResp := []*testTable{
 		{"abcd", 12}, {"abc", 10},
 	}
