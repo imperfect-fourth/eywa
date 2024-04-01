@@ -89,18 +89,16 @@ func (q *query[T]) DistinctOn(field string) *query[T] {
 	return q
 }
 
-type OrderByEnum string
-
 const (
-	OrderAsc            OrderByEnum = "asc"
-	OrderAscNullsFirst  OrderByEnum = "asc_nulls_first"
-	OrderAscNullsLast   OrderByEnum = "asc_nulls_last"
-	OrderDesc           OrderByEnum = "desc"
-	OrderDescNullsFirst OrderByEnum = "desc_nulls_first"
-	OrderDescNullsLast  OrderByEnum = "desc_nulls_last"
+	OrderAsc            = "asc"
+	OrderAscNullsFirst  = "asc_nulls_first"
+	OrderAscNullsLast   = "asc_nulls_last"
+	OrderDesc           = "desc"
+	OrderDescNullsFirst = "desc_nulls_first"
+	OrderDescNullsLast  = "desc_nulls_last"
 )
 
-func (q *query[T]) OrderBy(orderBys map[string]OrderByEnum) *query[T] {
+func (q *query[T]) OrderBy(orderBys map[string]string) *query[T] {
 	orderByClause := ""
 	for k, v := range orderBys {
 		if orderByClause == "" {
@@ -171,24 +169,35 @@ type graphqlError struct {
 	Extensions map[string]interface{} `json:"extensions"`
 }
 
-type Comparator string
-
 const (
-	Eq  Comparator = "_eq"
-	Neq Comparator = "_new"
-	Gt  Comparator = "_gt"
-	Gte Comparator = "_gte"
-	Lt  Comparator = "_lt"
-	Lte Comparator = "_lte"
+	Eq  = "_eq"
+	Neq = "_new"
+	Gt  = "_gt"
+	Gte = "_gte"
+	Lt  = "_lt"
+	Lte = "_lte"
 )
 
-type Comparison map[string]map[Comparator]interface{}
+type Comparison map[string]map[string]interface{}
 
 type WhereExpr struct {
-	And         []*WhereExpr
-	Or          []*WhereExpr
+	And         whereExprArr
+	Or          whereExprArr
 	Not         *WhereExpr
 	Comparisons Comparison
+}
+
+type whereExprArr []*WhereExpr
+
+func (w whereExprArr) build() string {
+	exprArr := make([]string, 0, len(w))
+	for _, exprElem := range w {
+		exprBuild := exprElem.build()
+		if exprBuild != "" {
+			exprArr = append(exprArr, exprBuild)
+		}
+	}
+	return strings.Join(exprArr, ", ")
 }
 
 func (w *WhereExpr) build() string {
@@ -200,26 +209,12 @@ func (w *WhereExpr) build() string {
 	}
 	var exprArr []string
 
-	andExprArr := make([]string, 0, len(w.And))
-	for _, andExprElem := range w.And {
-		andExprBuild := andExprElem.build()
-		if andExprBuild != "" {
-			andExprArr = append(andExprArr, andExprBuild)
-		}
-	}
-	andExpr := strings.Join(andExprArr, ", ")
+	andExpr := w.And.build()
 	if andExpr != "" {
 		exprArr = append(exprArr, fmt.Sprintf("_and: [%s]", andExpr))
 	}
 
-	orExprArr := make([]string, 0, len(w.Or))
-	for _, orExprElem := range w.Or {
-		orExprBuild := orExprElem.build()
-		if orExprBuild != "" {
-			orExprArr = append(orExprArr, orExprBuild)
-		}
-	}
-	orExpr := strings.Join(orExprArr, ", ")
+	orExpr := w.Or.build()
 	if orExpr != "" {
 		exprArr = append(exprArr, fmt.Sprintf("_or: [%s]", orExpr))
 	}

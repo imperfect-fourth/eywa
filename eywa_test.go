@@ -74,7 +74,7 @@ func TestQueryOrderBy(t *testing.T) {
 		},
 	)
 
-	resp, err := Query(&s).Select("name", "age").OrderBy(map[string]OrderByEnum{"age": OrderAsc}).Exec(c)
+	resp, err := Query(&s).Select("name", "age").OrderBy(map[string]string{"age": OrderAsc}).Exec(c)
 	expectedResp := []*testTable{
 		{"efgh", 10}, {"abc", 10}, {"abcd", 12},
 	}
