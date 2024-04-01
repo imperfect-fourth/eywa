@@ -56,10 +56,22 @@ type Model interface {
 	ModelName() string
 }
 
+//type querySkeleton[T Model] struct {
+//	operationName string
+//	selectFields  []string
+//
+//	model T
+//	// parentQuery *query[T]
+//}
+
+//func (q *querySkeleton[T]) Select(fields ...string) *query[T] {
+//	q.selectFields = fields
+//	return q.parentQuery
+//}
+
 type query[T Model] struct {
 	operationName string
 	selectFields  []string
-
 	queryModifier map[string]interface{}
 
 	model T
@@ -71,6 +83,7 @@ func Query[T Model](model T) *query[T] {
 		model:         model,
 		queryModifier: map[string]interface{}{},
 	}
+	//	q.querySkeleton.parentQuery = q
 	return q
 }
 
@@ -238,4 +251,70 @@ func (w *WhereExpr) build() string {
 
 	expr := fmt.Sprintf("{%s}", strings.Join(exprArr, ", "))
 	return expr
+}
+
+type modelPtr[T Model] interface {
+	*T
+	Model
+}
+
+type queryByPk[T modelPtr[Q], Q Model] struct {
+	operationName string
+	selectFields  []string
+	pk            map[string]interface{}
+
+	model T
+}
+
+func QueryByPk[T modelPtr[Q], Q Model](model T) *queryByPk[T, Q] {
+	return &queryByPk[T, Q]{
+		operationName: "GetByPk",
+		model:         model,
+	}
+}
+
+func (q *queryByPk[T, Q]) Select(selectFields ...string) *queryByPk[T, Q] {
+	q.selectFields = selectFields
+	return q
+}
+
+func (q *queryByPk[T, Q]) Pk(pk map[string]interface{}) *queryByPk[T, Q] {
+	q.pk = pk
+	return q
+}
+
+func (q *queryByPk[T, Q]) build() string {
+	baseQueryFormat := "query %s {%s(%s) {%s}}"
+
+	pk := make([]string, 0, len(q.pk))
+	for k, v := range q.pk {
+		if v == nil {
+			pk = append(pk, fmt.Sprintf("%s: null", k))
+		}
+		pk = append(pk, fmt.Sprintf("%s: %v", k, v))
+	}
+	return fmt.Sprintf(
+		baseQueryFormat,
+		q.operationName,
+		fmt.Sprintf("%s_by_pk", q.model.ModelName()),
+		strings.Join(pk, ", "),
+		strings.Join(q.selectFields, "\n"),
+	)
+}
+
+func (q *queryByPk[T, Q]) Exec(c *Client) (T, error) {
+	respBytes, err := c.do(q.build())
+
+	type graphqlResponse struct {
+		Data   map[string]T   `json:"data"`
+		Errors []graphqlError `json:"errors"`
+	}
+
+	respObj := graphqlResponse{}
+
+	err = json.NewDecoder(respBytes).Decode(&respObj)
+	if err != nil {
+		return nil, err
+	}
+	return respObj.Data[q.model.ModelName()+"_by_pk"], nil
 }
