@@ -242,6 +242,8 @@ func (w *WhereExpr) build() string {
 		for cmpr, val := range cmprs {
 			if val == nil {
 				cmpExprArr = append(cmpExprArr, fmt.Sprintf("%s: null", cmpr))
+			} else if _, ok := val.(fmt.Stringer); ok {
+				cmpExprArr = append(cmpExprArr, fmt.Sprintf(`%s: "%q"`, cmpr, val))
 			} else {
 				cmpExprArr = append(cmpExprArr, fmt.Sprintf("%s: %v", cmpr, val))
 			}
