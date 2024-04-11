@@ -57,18 +57,18 @@ type Model interface {
 	ModelName() string
 }
 
-//type querySkeleton[T Model] struct {
-//	operationName string
-//	selectFields  []string
-//
-//	model T
-//	// parentQuery *query[T]
-//}
+type querySkeleton[T Model] struct {
+	operationName string
+	selectFields  []string
 
-//func (q *querySkeleton[T]) Select(fields ...string) *query[T] {
-//	q.selectFields = fields
-//	return q.parentQuery
-//}
+	model T
+	parentQuery *query[T]
+}
+
+func (q *querySkeleton[T]) Select(fields ...string) *query[T] {
+	q.selectFields = fields
+	return q.parentQuery
+}
 
 type query[T Model] struct {
 	operationName string
@@ -78,14 +78,17 @@ type query[T Model] struct {
 	model T
 }
 
+ Query(&User{}).Select("name")
+
+ Select(func(m Model)
+
 func Query[T Model](model T) *query[T] {
 	q := &query[T]{
 		operationName: "Get",
 		model:         model,
 		queryModifier: map[string]interface{}{},
 	}
-	//	q.querySkeleton.parentQuery = q
-	return q
+	return querySkeleton{parentQuery: q}
 }
 
 func (q *query[T]) Select(fields ...string) *query[T] {
