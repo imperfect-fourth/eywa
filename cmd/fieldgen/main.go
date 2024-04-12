@@ -6,19 +6,30 @@ import (
 	"os"
 	re "regexp"
 
-	"github.com/dave/jennifer/jen"
 	"golang.org/x/tools/go/packages"
 )
 
 var graphqlTagPattern = re.MustCompile(`graphql:"([^"]+)"`)
 
+const basicTypeFieldFunc = `func %s() string {
+	return "%s"
+}
+`
+
+const structTypeFieldFunc = `func %s(subFieldFunc func() string, subFieldFuncs ...func() string) func() string {
+	subFields := []string{subFieldFunc()}
+	for _, f := range subFieldsFuncs {
+		subFields = append(subFields, f())
+	}
+	return func() string {return "%s{\n"+strings.Join(subFields, "\n")+"}"}
+}
+`
+
 func main() {
-	if len(os.Args) != 3 {
+	if len(os.Args) != 2 {
 		panic("expected exactly one argument: <source type>")
 	}
 	typeName := os.Args[1]
-	//	fmt.Println(typeName)
-	//	graphqlName := os.Args[1]
 
 	pkg, err := loadPackage()
 	if err != nil {
@@ -27,11 +38,9 @@ func main() {
 
 	typeObj := pkg.Types.Scope().Lookup(typeName)
 	if typeObj == nil {
-		panic("tyoe not found in package")
+		panic("type not found in package")
 	}
-	//	fmt.Println(typeObj)
 	typeStruct, ok := typeObj.Type().Underlying().(*types.Struct)
-	//	fmt.Println(typeStruct)
 
 	if !ok {
 		panic("type %v is not a struct")
@@ -44,34 +53,26 @@ func main() {
 		}
 		graphqlFieldName := graphqlTag[1]
 		structField := typeStruct.Field(i)
-		if _, ok := structField.Type().Underlying().(*types.Basic); ok {
+		structFieldType := structField.Type()
+
+		if ptr, ok := structFieldType.(*types.Pointer); ok {
+			structFieldType = ptr.Elem()
+		}
+
+		switch structFieldType.(type) {
+		case *types.Basic, *types.Map:
 			fmt.Printf(
-				"%#v\n",
-				jen.Func().Id(fmt.Sprintf("%s_%s", typeName, structField.Name())).Params().String().Block(
-					jen.Return(jen.Lit(graphqlFieldName)),
-				),
+				basicTypeFieldFunc,
+				fmt.Sprintf("%s_%s", typeName, structField.Name()),
+				graphqlFieldName,
 			)
-		} else {
+		case *types.Struct, *types.Slice:
 			fmt.Printf(
-				"%#v\n",
-				jen.Func().Id(fmt.Sprintf("%s_%s", typeName, structField.Name())).Params(
-					jen.Id("fields").Id("func() string"),
-				).String().Block(
-					jen.Id("res").Op(":=").Index().String().Values(),
-					jen.For(jen.List(jen.Id("_"), jen.Id("f")).Op(":=").Range().Id("fields")).Block(
-						jen.Id("fields").Op("=").Append(jen.Id("fields"), jen.Id("f").Call()),
-					),
-					jen.Return(
-						jen.Qual("fmt", "Sprintf").Call(
-							jen.Lit(graphqlFieldName+"{\n%s}"),
-							jen.Qual("strings", "Join").Call(
-								jen.Id("fields"),
-								jen.Lit("\n"),
-							),
-						),
-					),
-				),
+				structTypeFieldFunc,
+				fmt.Sprintf("%s_%s", typeName, structField.Name()),
+				graphqlFieldName,
 			)
+		default:
 		}
 	}
 }
