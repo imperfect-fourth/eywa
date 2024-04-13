@@ -11,17 +11,15 @@ import (
 
 var graphqlTagPattern = re.MustCompile(`graphql:"([^"]+)"`)
 
-const basicTypeFieldFunc = `func %s() string {
-	return "%s"
-}
+const basicTypeFieldConst = `const %s string = "%s"
 `
 
-const structTypeFieldFunc = `func %s(subFieldFunc func() string, subFieldFuncs ...func() string) func() string {
+const structTypeFieldFunc = `func %s(subFieldFunc func() string, subFieldFuncs ...func() string) string {
 	subFields := []string{subFieldFunc()}
 	for _, f := range subFieldsFuncs {
 		subFields = append(subFields, f())
 	}
-	return func() string {return "%s{\n"+strings.Join(subFields, "\n")+"}"}
+	return "%s{\n"+strings.Join(subFields, "\n")+"}"
 }
 `
 
@@ -62,7 +60,7 @@ func main() {
 		switch structFieldType.(type) {
 		case *types.Basic, *types.Map:
 			fmt.Printf(
-				basicTypeFieldFunc,
+				basicTypeFieldConst,
 				fmt.Sprintf("%s_%s", typeName, structField.Name()),
 				graphqlFieldName,
 			)
