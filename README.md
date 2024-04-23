@@ -62,10 +62,10 @@ q := Query(&User{}).Select("name").Where(
 resp, err := q.Exec(client)
 ```
 
-For eg, creating a new query to get 5 users by `age` who are older than, say, 35 but
-younger than 50, and selecting the field `id` is as easy as:
-```
-resp, err := Query(&User{}).Select("id").Where(
+For eg, creating a new query to get 5 users by `age` who are older than, say,
+35 but younger than 50, and selecting the field `id` is as easy as:
+```go
+resp, err := Query(&User{}).Select("id", "age").Where(
     Comparisons: Comparison{
         "age": {
             Gt: 35,
@@ -74,6 +74,83 @@ resp, err := Query(&User{}).Select("id").Where(
     },
 ).Limit(5).Exec(client)
 ```
+
+## `fieldgen` and death to raw string literals
+In the examples above, you may have noticed that the `Select` method takes raw 
+strings as field names. This is prone to typos. `eywa` has a codegen tool for 
+generating constants and functions for selecting fields.  
+Install fieldgen
+```bash
+go install github.com/hasura/eywa/cmd/fieldgen
+```
+Add `go:generate` comments to your code.
+```go
+//go:generate fieldgen -types User -output user_fields.go
+type User struct {
+    ...
+}
+```
+Run
+```go 
+go generate .
+```
+This will create a file `user_fields.go` in the same package
+```go
+//user_fields.go
+package <package>
+
+const User_Name string = "name"
+const User_Age string = "age"
+const User_ID string = "id"
+```
+Now, you can make the same query as:
+```go
+resp, err := Query(&User{}).Select(
+    User_ID,
+    User_Age,
+).Where(
+    Comparisons: Comparison{
+        User_Age: {
+            Gt: 35,
+            Lt: 50,
+        },
+    },
+).Limit(5).Exec(client)
+```
+
+If a model has a relationship with another model, `fieldgen` will generate a
+function to select fields for that relationship. Eg.
+```go
+//go:generate fieldgen -types User,Order -output model_fields.go
+type User struct {
+    ...
+    Orders []Order `graphql:"orders"`
+}
+type Order struct {
+    ID  uuid.UUID `graphql:"id"`
+}
+
+...
+
+resp, err := Query(&User{}).Select(
+    User_ID,
+    User_Name,
+    User_Orders(
+        Order_ID,
+    ),
+).Limit(5).Exec(client)
+
+//query GetUser {
+//  user(limit: 5) {
+//    id
+//    name
+//    orders {
+//      id
+//    }
+//  }
+//}
+```
+
 
 ## Hasura support
 
