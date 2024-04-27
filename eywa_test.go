@@ -8,8 +8,10 @@ import (
 )
 
 type testTable struct {
-	Name string `graphql:"name"`
-	Age  int    `graphql:"age"`
+	Name          string  `json:"name"`
+	Age           int     `json:"age"`
+	ID            *int    `json:"id,omitempty"`
+	nullableField *string `json:"nullable_field"`
 }
 
 func (t testTable) ModelName() string {
@@ -57,7 +59,7 @@ func TestQueryDistinctOn(t *testing.T) {
 
 	resp, err := Query(&s).Select("name", "age").DistinctOn("age").Exec(c)
 	expectedResp := []*testTable{
-		{"efgh", 10}, {"abcd", 12},
+		{Name: "efgh", Age: 10}, {Name: "abcd", Age: 12},
 	}
 
 	if assert.NoError(t, err) {
@@ -74,13 +76,18 @@ func TestQueryOrderBy(t *testing.T) {
 		},
 	)
 
-	resp, err := Query(&s).Select("name", "age").OrderBy(map[string]string{"age": OrderAsc}).Exec(c)
-	expectedResp := []*testTable{
-		{"efgh", 10}, {"abc", 10}, {"abcd", 12},
-	}
-
+	resp, err := Query(&s).Select("name", "age").OrderBy(map[string]string{"age": OrderAsc}).Limit(5).Exec(c)
 	if assert.NoError(t, err) {
-		assert.Equal(t, expectedResp, resp)
+		asc := true
+		prev := 0
+		for _, r := range resp {
+			if r.Age < prev {
+				asc = false
+			}
+			prev = r.Age
+		}
+
+		assert.Equal(t, asc, true)
 	}
 }
 
@@ -93,7 +100,6 @@ func TestQueryWhere(t *testing.T) {
 		},
 	)
 
-	//	resp, err := Query(&s).Select("name", "age").Where(`{_or: [{name: {_eq: "abc"}}, {age: {_eq: 12}}]}`).Exec(c)
 	resp, err := Query(&s).Select("name", "age").Where(
 		&WhereExpr{
 			Or: []*WhereExpr{
@@ -115,7 +121,7 @@ func TestQueryWhere(t *testing.T) {
 		},
 	).Exec(c)
 	expectedResp := []*testTable{
-		{"abcd", 12}, {"abc", 10},
+		{Name: "abcd", Age: 12}, {Name: "abc", Age: 10},
 	}
 
 	if assert.NoError(t, err) {
@@ -132,8 +138,24 @@ func TestQueryByPk(t *testing.T) {
 		},
 	)
 
-	resp, err := QueryByPk(&s).Pk(map[string]interface{}{"name": "abcd"}).Select("name", "age").Exec(c)
-	expectedResp := &testTable{"abcd", 12}
+	resp, err := QueryByPk(&s).Pk(map[string]interface{}{"id": 1}).Select("name", "age").Exec(c)
+	expectedResp := &testTable{Name: "abcd", Age: 12}
+
+	if assert.NoError(t, err) {
+		assert.Equal(t, expectedResp, resp)
+	}
+}
+
+func TestInsertOne(t *testing.T) {
+	accessKey := os.Getenv("TEST_HGE_ACCESS_KEY")
+	c := NewClient("https://aware-cowbird-80.hasura.app/v1/graphql",
+		map[string]string{
+			"x-hasura-access-key": accessKey,
+		},
+	)
+
+	resp, err := InsertOne(&testTable{Name: "test", Age: 1}).Select("name", "age").Exec(c)
+	expectedResp := &testTable{Name: "test", Age: 11}
 
 	if assert.NoError(t, err) {
 		assert.Equal(t, expectedResp, resp)

@@ -53,55 +53,49 @@ func (c *Client) do(q string) (*bytes.Buffer, error) {
 	return &respBytes, err
 }
 
-type Model interface {
+type Model[T any] interface {
+	*T
 	ModelName() string
 }
 
-type querySkeleton[T Model] struct {
+type querySkeleton[T any, M Model[T]] struct {
 	operationName string
 	selectFields  []string
-
-	model T
-	parentQuery *query[T]
 }
 
-func (q *querySkeleton[T]) Select(fields ...string) *query[T] {
+func (q *querySkeleton[T, M]) setSelectFields(fields []string) {
 	q.selectFields = fields
-	return q.parentQuery
 }
 
-type query[T Model] struct {
-	operationName string
-	selectFields  []string
+type query[T any, M Model[T]] struct {
+	*querySkeleton[T, M]
+
+	model         M
 	queryModifier map[string]interface{}
-
-	model T
 }
 
- Query(&User{}).Select("name")
-
- Select(func(m Model)
-
-func Query[T Model](model T) *query[T] {
-	q := &query[T]{
-		operationName: "Get",
+func Query[T any, M Model[T]](model M) *query[T, M] {
+	q := &query[T, M]{
+		querySkeleton: &querySkeleton[T, M]{
+			operationName: "Get",
+		},
 		model:         model,
 		queryModifier: map[string]interface{}{},
 	}
-	return querySkeleton{parentQuery: q}
-}
-
-func (q *query[T]) Select(fields ...string) *query[T] {
-	q.selectFields = fields
 	return q
 }
 
-func (q *query[T]) Limit(n int) *query[T] {
+func (q *query[T, M]) Select(fields ...string) *query[T, M] {
+	q.setSelectFields(fields)
+	return q
+}
+
+func (q *query[T, M]) Limit(n int) *query[T, M] {
 	q.queryModifier["limit"] = n
 	return q
 }
 
-func (q *query[T]) DistinctOn(field string) *query[T] {
+func (q *query[T, M]) DistinctOn(field string) *query[T, M] {
 	q.queryModifier["distinct_on"] = field
 	return q
 }
@@ -115,7 +109,7 @@ const (
 	OrderDescNullsLast  = "desc_nulls_last"
 )
 
-func (q *query[T]) OrderBy(orderBys map[string]string) *query[T] {
+func (q *query[T, M]) OrderBy(orderBys map[string]string) *query[T, M] {
 	orderByClause := ""
 	for k, v := range orderBys {
 		if orderByClause == "" {
@@ -129,12 +123,12 @@ func (q *query[T]) OrderBy(orderBys map[string]string) *query[T] {
 	return q
 }
 
-func (q *query[T]) Where(where *WhereExpr) *query[T] {
+func (q *query[T, M]) Where(where *WhereExpr) *query[T, M] {
 	q.queryModifier["where"] = where.build()
 	return q
 }
 
-func (q *query[T]) build() string {
+func (q *query[T, M]) build() string {
 	baseQueryFormat := "query %s {%s%s {%s}}"
 
 	modifierClause := ""
@@ -160,11 +154,11 @@ func (q *query[T]) build() string {
 	return gql
 }
 
-func (q *query[T]) Exec(client *Client) ([]T, error) {
+func (q *query[T, M]) Exec(client *Client) ([]M, error) {
 	respBytes, err := client.do(q.build())
 
 	type graphqlResponse struct {
-		Data   map[string][]T `json:"data"`
+		Data   map[string][]M `json:"data"`
 		Errors []graphqlError `json:"errors"`
 	}
 
@@ -263,37 +257,33 @@ func (w *WhereExpr) build() string {
 	return expr
 }
 
-type modelPtr[T Model] interface {
-	*T
-	Model
+type queryByPk[T any, M Model[T]] struct {
+	*querySkeleton[T, M]
+
+	model M
+	pk    map[string]interface{}
 }
 
-type queryByPk[T modelPtr[Q], Q Model] struct {
-	operationName string
-	selectFields  []string
-	pk            map[string]interface{}
-
-	model T
-}
-
-func QueryByPk[T modelPtr[Q], Q Model](model T) *queryByPk[T, Q] {
-	return &queryByPk[T, Q]{
-		operationName: "GetByPk",
-		model:         model,
+func QueryByPk[T any, M Model[T]](model M) *queryByPk[T, M] {
+	return &queryByPk[T, M]{
+		querySkeleton: &querySkeleton[T, M]{
+			operationName: "GetByPk",
+		},
+		model: model,
 	}
 }
 
-func (q *queryByPk[T, Q]) Select(selectFields ...string) *queryByPk[T, Q] {
+func (q *queryByPk[T, M]) Select(selectFields ...string) *queryByPk[T, M] {
 	q.selectFields = selectFields
 	return q
 }
 
-func (q *queryByPk[T, Q]) Pk(pk map[string]interface{}) *queryByPk[T, Q] {
+func (q *queryByPk[T, M]) Pk(pk map[string]interface{}) *queryByPk[T, M] {
 	q.pk = pk
 	return q
 }
 
-func (q *queryByPk[T, Q]) build() string {
+func (q *queryByPk[T, M]) build() string {
 	baseQueryFormat := "query %s {%s(%s) {%s}}"
 
 	pk := make([]string, 0, len(q.pk))
@@ -312,11 +302,11 @@ func (q *queryByPk[T, Q]) build() string {
 	)
 }
 
-func (q *queryByPk[T, Q]) Exec(c *Client) (T, error) {
+func (q *queryByPk[T, M]) Exec(c *Client) (M, error) {
 	respBytes, err := c.do(q.build())
 
 	type graphqlResponse struct {
-		Data   map[string]T   `json:"data"`
+		Data   map[string]M   `json:"data"`
 		Errors []graphqlError `json:"errors"`
 	}
 

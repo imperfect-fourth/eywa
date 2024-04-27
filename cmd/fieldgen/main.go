@@ -21,7 +21,7 @@ func usage() {
 	fmt.Fprintf(os.Stderr, "\tfieldgen -types <comma separated list of type names> [-output <output file>]")
 }
 
-var graphqlTagPattern = re.MustCompile(`graphql:"([^"]+)"`)
+var tagPattern = re.MustCompile(`json:"([^"]+)"`)
 
 const basicTypeFieldConst = `const %s string = "%s"
 `
@@ -87,11 +87,15 @@ func parseType(typeName string, pkg *packages.Package) string {
 	gen := ""
 	importStrings := false
 	for i := 0; i < typeStruct.NumFields(); i++ {
-		graphqlTag := graphqlTagPattern.FindStringSubmatch(typeStruct.Tag(i))
-		if graphqlTag == nil {
+		tag := tagPattern.FindStringSubmatch(typeStruct.Tag(i))
+		if tag == nil {
 			continue
 		}
-		graphqlFieldName := graphqlTag[1]
+		tagValue := strings.Split(tag[1], ",")
+		if len(tagValue) == 0 {
+			continue
+		}
+		fieldName := tagValue[0]
 		structField := typeStruct.Field(i)
 		structFieldType := structField.Type()
 
@@ -104,14 +108,14 @@ func parseType(typeName string, pkg *packages.Package) string {
 			gen += fmt.Sprintf(
 				basicTypeFieldConst,
 				fmt.Sprintf("%s_%s", typeName, structField.Name()),
-				graphqlFieldName,
+				fieldName,
 			)
 		case *types.Struct, *types.Slice:
 			importStrings = true
 			gen += fmt.Sprintf(
 				structTypeFieldFunc,
 				fmt.Sprintf("%s_%s", typeName, structField.Name()),
-				graphqlFieldName,
+				fieldName,
 			)
 		default:
 		}
