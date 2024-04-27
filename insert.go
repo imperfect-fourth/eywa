@@ -141,3 +141,53 @@ func (iq *insert[T, M]) Exec(client *Client) (*InsertResponse[T, M], error) {
 	}
 	return respObj.Data[fmt.Sprintf("insert_%s", iq.objects[0].ModelName())], nil
 }
+
+var modelInterfaceType *reflect.Type = reflect.TypeOf(new(Model))
+
+func encodeModelValue(value *reflect.Value) ([]byte, error) {
+	if value.IsNil() {
+		return []byte{"null"}
+	}
+	buf := bytes.NewBuffer("{")
+	valType := value.Type()
+	for i := 0; i < value.NumField(); i++ {
+		if i > 0 {
+			buf.WriteByte(',')
+		}
+		tag := 
+
+	}
+}
+
+func encodeValue(value *reflect.Value) ([]byte, error) {
+	if value.Kind() >= reflect.Bool && value.Kind() <= value.Complex128 || value.Kind() == reflect.String {
+		return json.Marshal(v.Interface())
+	} else if value.Kind() == reflect.Pointer {
+		if value.Type().Implements(modelInterfaceType) {
+		}
+		return encodeValue(value.Elem())
+	} else if value.Kind() == reflect.Struct {
+		return json.Marshal(v.Interface())
+	} else if value.Kind() == reflect.Interface {
+		return encodeValue(value.Elem())
+	} else if value.Kind() == reflect.Map {
+		return json.Marshal(v.Interface())
+//		bytes := []byte{"{"}
+//		iter := value.Range()
+//		for iter.Next() {
+//			keyBytes, err := encodeValue(iter.Key())
+//			if err != nil {
+//				return nil, err
+//			}
+//			valBytes, err := encodeValue(iter.Value())
+//			if err != nil {
+//				return nil, err
+//			}
+//			bytes = append(bytes, keyBytes...)
+//			bytes = append(bytes, valBytes...)
+//		}
+//		bytes = append(bytes, byte("}"))
+	} else if value.Kind() == reflect.Slice || value.Kind() == reflect.Array {
+		buf := bytes.NewBuffer("[")
+		for i := 0; i < value.Len(); i++ {
+			if i > 0 {
