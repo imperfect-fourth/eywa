@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"reflect"
 	"strings"
 )
 
@@ -150,7 +149,6 @@ func (q *query[T, M]) build() string {
 		modifierClause,
 		strings.Join(q.selectFields, "\n"),
 	)
-	fmt.Println(gql)
 	return gql
 }
 
@@ -239,7 +237,6 @@ func (w *WhereExpr) build() string {
 	for field, cmprs := range w.Comparisons {
 		cmpExprArr := make([]string, 0, len(cmprs))
 		for cmpr, val := range cmprs {
-			fmt.Println(reflect.TypeOf(val))
 			if val == nil {
 				cmpExprArr = append(cmpExprArr, fmt.Sprintf("%s: null", cmpr))
 			} else if _, ok := val.(string); ok {

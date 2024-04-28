@@ -57,13 +57,16 @@ func TestQueryDistinctOn(t *testing.T) {
 		},
 	)
 
-	resp, err := Query(&s).Select("name", "age").DistinctOn("age").Exec(c)
-	expectedResp := []*testTable{
-		{Name: "efgh", Age: 10}, {Name: "abcd", Age: 12},
-	}
-
+	resp, err := Query(&s).Select("name", "age").DistinctOn("age").Limit(5).Exec(c)
 	if assert.NoError(t, err) {
-		assert.Equal(t, expectedResp, resp)
+		repeatCheck := make(map[int]bool)
+		for _, r := range resp {
+			if assert.False(t, repeatCheck[r.Age]) {
+				repeatCheck[r.Age] = true
+				continue
+			}
+			return
+		}
 	}
 }
 
@@ -87,7 +90,7 @@ func TestQueryOrderBy(t *testing.T) {
 			prev = r.Age
 		}
 
-		assert.Equal(t, asc, true)
+		assert.True(t, asc)
 	}
 }
 
@@ -155,9 +158,33 @@ func TestInsertOne(t *testing.T) {
 	)
 
 	resp, err := InsertOne(&testTable{Name: "test", Age: 1}).Select("name", "age").Exec(c)
-	expectedResp := &testTable{Name: "test", Age: 11}
+	expectedResp := &testTable{Name: "test", Age: 1}
 
 	if assert.NoError(t, err) {
 		assert.Equal(t, expectedResp, resp)
+	}
+}
+
+func TestInsert(t *testing.T) {
+	accessKey := os.Getenv("TEST_HGE_ACCESS_KEY")
+	c := NewClient("https://aware-cowbird-80.hasura.app/v1/graphql",
+		map[string]string{
+			"x-hasura-access-key": accessKey,
+		},
+	)
+
+	resp, err := Insert(&testTable{Name: "test", Age: 1}, &testTable{Name: "test2", Age: 2}).AffectedRows().Select("name", "age").Exec(c)
+	rows := 2
+	expectedResp := &InsertResponse[testTable, *testTable]{
+		AffectedRows: &rows,
+		Returning: []*testTable{
+			&testTable{Name: "test", Age: 1},
+			&testTable{Name: "test2", Age: 2},
+		},
+	}
+
+	if assert.NoError(t, err) {
+		assert.Equal(t, expectedResp.AffectedRows, resp.AffectedRows)
+		assert.ElementsMatch(t, expectedResp.Returning, resp.Returning)
 	}
 }
