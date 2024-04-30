@@ -66,8 +66,7 @@ func (io *insertOne[T, M]) Exec(client *Client) (M, error) {
 type insert[T any, M Model[T]] struct {
 	*querySkeleton[T, M]
 
-	affectedRows bool
-	objects      modelArr[T, M]
+	objects modelArr[T, M]
 }
 
 func Insert[T any, M Model[T]](object M, objects ...M) *insert[T, M] {
@@ -75,18 +74,12 @@ func Insert[T any, M Model[T]](object M, objects ...M) *insert[T, M] {
 		querySkeleton: &querySkeleton[T, M]{
 			operationName: "insert",
 		},
-		affectedRows: false,
-		objects:      append(objects, object),
+		objects: append(objects, object),
 	}
 }
 
 func (iq *insert[T, M]) Select(fields ...string) *insert[T, M] {
 	iq.setSelectFields(fields)
-	return iq
-}
-
-func (iq *insert[T, M]) AffectedRows() *insert[T, M] {
-	iq.affectedRows = true
 	return iq
 }
 
@@ -96,13 +89,7 @@ func (iq *insert[T, M]) build() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	returnBlock := ""
-	if len(iq.querySkeleton.selectFields) != 0 {
-		returnBlock = fmt.Sprintf("returning{%s}", strings.Join(iq.querySkeleton.selectFields, "\n"))
-	}
-	if iq.affectedRows || returnBlock == "" {
-		returnBlock = "affected_rows\n" + returnBlock
-	}
+	returnBlock := fmt.Sprintf("returning{%s}", strings.Join(iq.querySkeleton.selectFields, "\n"))
 
 	q := fmt.Sprintf(
 		insertQueryFormat,
@@ -115,11 +102,11 @@ func (iq *insert[T, M]) build() (string, error) {
 }
 
 type InsertResponse[T any, M Model[T]] struct {
-	AffectedRows *int `json:"affected_rows"`
-	Returning    []M  `json:"returning"`
+	//	AffectedRows *int `json:"affected_rows"`
+	Returning []M `json:"returning"`
 }
 
-func (iq *insert[T, M]) Exec(client *Client) (*InsertResponse[T, M], error) {
+func (iq *insert[T, M]) Exec(client *Client) ([]M, error) {
 	query, err := iq.build()
 	if err != nil {
 		return nil, fmt.Errorf("couldn't build query: %w", err)
@@ -138,7 +125,7 @@ func (iq *insert[T, M]) Exec(client *Client) (*InsertResponse[T, M], error) {
 	if err != nil {
 		return nil, err
 	}
-	return respObj.Data[fmt.Sprintf("insert_%s", iq.objects[0].ModelName())], nil
+	return respObj.Data[fmt.Sprintf("insert_%s", iq.objects[0].ModelName())].Returning, nil
 }
 
 type modelRawJsonMap map[string]json.RawMessage

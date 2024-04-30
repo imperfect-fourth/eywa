@@ -173,19 +173,14 @@ func TestInsert(t *testing.T) {
 		},
 	)
 
-	resp, err := Insert(&testTable{Name: "test", Age: 1}, &testTable{Name: "test2", Age: 2}).AffectedRows().Select("name", "age").Exec(c)
-	rows := 2
-	expectedResp := &InsertResponse[testTable, *testTable]{
-		AffectedRows: &rows,
-		Returning: []*testTable{
-			&testTable{Name: "test", Age: 1},
-			&testTable{Name: "test2", Age: 2},
-		},
+	resp, err := Insert(&testTable{Name: "test", Age: 1}, &testTable{Name: "test2", Age: 2}).Select("name", "age").Exec(c)
+	expectedResp := []*testTable{
+		&testTable{Name: "test", Age: 1},
+		&testTable{Name: "test2", Age: 2},
 	}
 
 	if assert.NoError(t, err) {
-		assert.Equal(t, expectedResp.AffectedRows, resp.AffectedRows)
-		assert.ElementsMatch(t, expectedResp.Returning, resp.Returning)
+		assert.ElementsMatch(t, expectedResp, resp)
 	}
 }
 
@@ -201,7 +196,7 @@ func TestDelete(t *testing.T) {
 		&testTable{Name: "testdelete", Age: 3},
 		&testTable{Name: "testdelete", Age: 4},
 		&testTable{Name: "testdelete", Age: 5},
-	).AffectedRows().Exec(c)
+	).Select("name").Exec(c)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -212,9 +207,10 @@ func TestDelete(t *testing.T) {
 				Eq: "testdelete",
 			},
 		},
-	}).AffectedRows().Exec(c)
-	rows := 3
+	}).Select("name").Exec(c)
 	if assert.NoError(t, err) {
-		assert.Equal(t, &rows, resp.AffectedRows)
+		for _, r := range resp {
+			assert.Equal(t, "testdelete", r.Name)
+		}
 	}
 }
