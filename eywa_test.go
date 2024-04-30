@@ -188,3 +188,33 @@ func TestInsert(t *testing.T) {
 		assert.ElementsMatch(t, expectedResp.Returning, resp.Returning)
 	}
 }
+
+func TestDelete(t *testing.T) {
+	accessKey := os.Getenv("TEST_HGE_ACCESS_KEY")
+	c := NewClient("https://aware-cowbird-80.hasura.app/v1/graphql",
+		map[string]string{
+			"x-hasura-access-key": accessKey,
+		},
+	)
+
+	_, err := Insert(
+		&testTable{Name: "testdelete", Age: 3},
+		&testTable{Name: "testdelete", Age: 4},
+		&testTable{Name: "testdelete", Age: 5},
+	).AffectedRows().Exec(c)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	resp, err := Delete[testTable]().Where(&WhereExpr{
+		Comparisons: Comparison{
+			"name": {
+				Eq: "testdelete",
+			},
+		},
+	}).AffectedRows().Exec(c)
+	rows := 3
+	if assert.NoError(t, err) {
+		assert.Equal(t, &rows, resp.AffectedRows)
+	}
+}
