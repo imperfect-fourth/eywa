@@ -44,9 +44,9 @@ and then **flexibly** and **dynamically** build whatever query you need using
 ORM-style method chaining. The above query using eywa would look like:
 ```go
 type User struct {
-    ID   uuid.UUID `graphql:"id"`
-    Name string    `graphql:"name"`
-    Age  int       `graphql:"age"`
+    ID   uuid.UUID `json:"id"`
+    Name string    `json:"name"`
+    Age  int       `json:"age"`
 }
 
 // to satisfy the Model interface
@@ -124,10 +124,10 @@ function to select fields for that relationship. Eg.
 //go:generate fieldgen -types User,Order -output model_fields.go
 type User struct {
     ...
-    Orders []Order `graphql:"orders"`
+    Orders []Order `json:"orders"`
 }
 type Order struct {
-    ID  uuid.UUID `graphql:"id"`
+    ID  uuid.UUID `json:"id"`
 }
 
 ...
