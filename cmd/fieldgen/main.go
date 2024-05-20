@@ -69,7 +69,7 @@ package %s
 		return
 	}
 	if err := writeToFile(outputFileName, header+gen); err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
+		fmt.Fprint(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 }

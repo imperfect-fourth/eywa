@@ -8,10 +8,9 @@ import (
 )
 
 type testTable struct {
-	Name          string  `json:"name"`
-	Age           int     `json:"age"`
-	ID            *int    `json:"id,omitempty"`
-	nullableField *string `json:"nullable_field"`
+	Name string `json:"name"`
+	Age  int    `json:"age"`
+	ID   *int   `json:"id,omitempty"`
 }
 
 func (t testTable) ModelName() string {
