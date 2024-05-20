@@ -1,0 +1,16 @@
+name: Tests
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22.x"
+      - name: Test
+        env:
+          TEST_HGE_ACCESS_KEY: ${{ secrets.TEST_HGE_ACCESS_KEY }}
+        run: go test -v -cover ./...

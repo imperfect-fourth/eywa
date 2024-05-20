@@ -154,6 +154,9 @@ func (q *query[T, M]) build() string {
 
 func (q *query[T, M]) Exec(client *Client) ([]M, error) {
 	respBytes, err := client.do(q.build())
+	if err != nil {
+		return nil, err
+	}
 
 	type graphqlResponse struct {
 		Data   map[string][]M `json:"data"`
@@ -301,6 +304,9 @@ func (q *queryByPk[T, M]) build() string {
 
 func (q *queryByPk[T, M]) Exec(c *Client) (M, error) {
 	respBytes, err := c.do(q.build())
+	if err != nil {
+		return nil, err
+	}
 
 	type graphqlResponse struct {
 		Data   map[string]M   `json:"data"`
