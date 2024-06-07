@@ -52,126 +52,6 @@ func (c *Client) do(q string) (*bytes.Buffer, error) {
 	return &respBytes, err
 }
 
-type Model[T any] interface {
-	*T
-	ModelName() string
-}
-
-type querySkeleton[T any, M Model[T]] struct {
-	operationName string
-	selectFields  []string
-}
-
-func (q *querySkeleton[T, M]) setSelectFields(fields []string) {
-	q.selectFields = fields
-}
-
-type query[T any, M Model[T]] struct {
-	*querySkeleton[T, M]
-
-	model         M
-	queryModifier map[string]interface{}
-}
-
-func Query[T any, M Model[T]](model M) *query[T, M] {
-	q := &query[T, M]{
-		querySkeleton: &querySkeleton[T, M]{
-			operationName: "Get",
-		},
-		model:         model,
-		queryModifier: map[string]interface{}{},
-	}
-	return q
-}
-
-func (q *query[T, M]) Select(fields ...string) *query[T, M] {
-	q.setSelectFields(fields)
-	return q
-}
-
-func (q *query[T, M]) Limit(n int) *query[T, M] {
-	q.queryModifier["limit"] = n
-	return q
-}
-
-func (q *query[T, M]) DistinctOn(field string) *query[T, M] {
-	q.queryModifier["distinct_on"] = field
-	return q
-}
-
-const (
-	OrderAsc            = "asc"
-	OrderAscNullsFirst  = "asc_nulls_first"
-	OrderAscNullsLast   = "asc_nulls_last"
-	OrderDesc           = "desc"
-	OrderDescNullsFirst = "desc_nulls_first"
-	OrderDescNullsLast  = "desc_nulls_last"
-)
-
-func (q *query[T, M]) OrderBy(orderBys map[string]string) *query[T, M] {
-	orderByClause := ""
-	for k, v := range orderBys {
-		if orderByClause == "" {
-			orderByClause = fmt.Sprintf("{%s: %s", k, v)
-		} else {
-			orderByClause = fmt.Sprintf("%s, %s: %s", orderByClause, k, v)
-		}
-	}
-	orderByClause += "}"
-	q.queryModifier["order_by"] = orderByClause
-	return q
-}
-
-func (q *query[T, M]) Where(where *WhereExpr) *query[T, M] {
-	q.queryModifier["where"] = where.build()
-	return q
-}
-
-func (q *query[T, M]) build() string {
-	baseQueryFormat := "query %s {%s%s {%s}}"
-
-	modifierClause := ""
-	for k, v := range q.queryModifier {
-		if modifierClause == "" {
-			modifierClause = fmt.Sprintf("(%s: %v", k, v)
-		} else {
-			modifierClause = fmt.Sprintf("%s, %s: %v", modifierClause, k, v)
-		}
-	}
-	if modifierClause != "" {
-		modifierClause = modifierClause + ")"
-	}
-
-	gql := fmt.Sprintf(
-		baseQueryFormat,
-		q.operationName,
-		q.model.ModelName(),
-		modifierClause,
-		strings.Join(q.selectFields, "\n"),
-	)
-	return gql
-}
-
-func (q *query[T, M]) Exec(client *Client) ([]M, error) {
-	respBytes, err := client.do(q.build())
-	if err != nil {
-		return nil, err
-	}
-
-	type graphqlResponse struct {
-		Data   map[string][]M `json:"data"`
-		Errors []graphqlError `json:"errors"`
-	}
-
-	respObj := graphqlResponse{}
-
-	err = json.NewDecoder(respBytes).Decode(&respObj)
-	if err != nil {
-		return nil, err
-	}
-	return respObj.Data[q.model.ModelName()], nil
-}
-
 type graphqlRequest struct {
 	Query     string                 `json:"query"`
 	Variables map[string]interface{} `json:"variables"`
@@ -202,10 +82,10 @@ type WhereExpr struct {
 
 type whereExprArr []*WhereExpr
 
-func (w whereExprArr) build() string {
+func (w whereExprArr) marshalGQL() string {
 	exprArr := make([]string, 0, len(w))
 	for _, exprElem := range w {
-		exprBuild := exprElem.build()
+		exprBuild := exprElem.marshalGQL()
 		if exprBuild != "" {
 			exprArr = append(exprArr, exprBuild)
 		}
@@ -213,7 +93,7 @@ func (w whereExprArr) build() string {
 	return strings.Join(exprArr, ", ")
 }
 
-func (w *WhereExpr) build() string {
+func (w *WhereExpr) marshalGQL() string {
 	if w == nil {
 		return ""
 	}
@@ -222,17 +102,17 @@ func (w *WhereExpr) build() string {
 	}
 	var exprArr []string
 
-	andExpr := w.And.build()
+	andExpr := w.And.marshalGQL()
 	if andExpr != "" {
 		exprArr = append(exprArr, fmt.Sprintf("_and: [%s]", andExpr))
 	}
 
-	orExpr := w.Or.build()
+	orExpr := w.Or.marshalGQL()
 	if orExpr != "" {
 		exprArr = append(exprArr, fmt.Sprintf("_or: [%s]", orExpr))
 	}
 
-	notExpr := w.Not.build()
+	notExpr := w.Not.marshalGQL()
 	if notExpr != "" {
 		exprArr = append(exprArr, fmt.Sprintf("_not: %s", notExpr))
 	}
@@ -257,59 +137,166 @@ func (w *WhereExpr) build() string {
 	return expr
 }
 
-type queryByPk[T any, M Model[T]] struct {
-	*querySkeleton[T, M]
-
-	model M
-	pk    map[string]interface{}
+type Model[T any] interface {
+	*T
+	ModelName() string
 }
 
-func QueryByPk[T any, M Model[T]](model M) *queryByPk[T, M] {
-	return &queryByPk[T, M]{
-		querySkeleton: &querySkeleton[T, M]{
-			operationName: "GetByPk",
+type Field[T any, M Model[T]] string
+type ModelField[T any, M Model[T]] interface {
+	Field[T, M] | string
+}
+
+type ModelFieldArr[T any, M Model[T], MF ModelField[T, M]] []MF
+
+func (mfs ModelFieldArr[T, M, MF]) marshalGQL() string {
+	buf := bytes.NewBufferString("")
+	for i, mf := range mfs {
+		if i > 0 {
+			buf.WriteString("\n")
+		}
+		buf.WriteString(string(mf))
+	}
+	return buf.String()
+}
+
+type ModelFieldMap[T any, M Model[T], MF ModelField[T, M]] map[MF]interface{}
+
+func (mfs ModelFieldMap[T, M, MF]) marshalGQL() string {
+	if mfs == nil {
+		return "{}"
+	}
+	buf := bytes.NewBuffer([]byte("{"))
+	first := true
+	for k, v := range mfs {
+		if !first {
+			buf.WriteString(", ")
+		} else {
+			first = false
+		}
+		buf.WriteString(string(k))
+		buf.WriteString(": ")
+		valJson, _ := json.Marshal(v)
+		buf.Write(valJson)
+	}
+	buf.WriteString("}")
+	return buf.String()
+}
+
+type Queryable interface {
+	Query() string
+}
+
+type GQLQuery struct {
+	name    string
+	queries []Queryable
+}
+
+type querySkeleton[T any, M Model[T], MF ModelField[T, M]] struct {
+	modelName string
+	// fields    ModelFieldArr[T, M, MF]
+	distinctOn *MF
+	limit      *int
+	offset     *int
+	where      *WhereExpr
+}
+
+func Select[T any, M Model[T]](m M) *SelectQueryBuilder[T, M, string] {
+	return &SelectQueryBuilder[T, M, string]{
+		querySkeleton: querySkeleton[T, M, string]{
+			modelName: m.ModelName(),
+			//			fields:    append(fields, field),
 		},
-		model: model,
 	}
 }
 
-func (q *queryByPk[T, M]) Select(selectFields ...string) *queryByPk[T, M] {
-	q.selectFields = selectFields
-	return q
+type SelectQueryBuilder[T any, M Model[T], MF ModelField[T, M]] struct {
+	querySkeleton[T, M, MF]
 }
 
-func (q *queryByPk[T, M]) Pk(pk map[string]interface{}) *queryByPk[T, M] {
-	q.pk = pk
-	return q
+func (sq SelectQueryBuilder[T, M, MF]) queryModelName() string {
+	return sq.modelName
 }
 
-func (q *queryByPk[T, M]) build() string {
-	baseQueryFormat := "query %s {%s(%s) {%s}}"
+func (sq SelectQueryBuilder[T, M, MF]) DistinctOn(f MF) SelectQueryBuilder[T, M, MF] {
+	sq.distinctOn = &f
+	return sq
+}
 
-	pk := make([]string, 0, len(q.pk))
-	for k, v := range q.pk {
-		if v == nil {
-			pk = append(pk, fmt.Sprintf("%s: null", k))
-		}
-		pk = append(pk, fmt.Sprintf("%s: %v", k, v))
+func (sq SelectQueryBuilder[T, M, MF]) Offset(n int) SelectQueryBuilder[T, M, MF] {
+	sq.offset = &n
+	return sq
+}
+
+func (sq SelectQueryBuilder[T, M, MF]) Limit(n int) SelectQueryBuilder[T, M, MF] {
+	sq.limit = &n
+	return sq
+}
+
+func (sq SelectQueryBuilder[T, M, MF]) Where(w *WhereExpr) SelectQueryBuilder[T, M, MF] {
+	sq.where = w
+	return sq
+}
+
+func (sq *SelectQueryBuilder[T, M, MF]) marshalGQL() string {
+	var modifiers []string
+	if sq.distinctOn != nil {
+		modifiers = append(modifiers, fmt.Sprintf("distinct_on: %s", string(*(sq.distinctOn))))
+	}
+	if sq.limit != nil {
+		modifiers = append(modifiers, fmt.Sprintf("limit: %d", *(sq.limit)))
+	}
+	if sq.offset != nil {
+		modifiers = append(modifiers, fmt.Sprintf("offset: %d", *(sq.offset)))
+	}
+	if sq.where != nil {
+		modifiers = append(modifiers, fmt.Sprintf("where: %s", sq.where.marshalGQL()))
+	}
+
+	modifier := strings.Join(modifiers, ", ")
+	if modifier != "" {
+		modifier = fmt.Sprintf("(%s)", modifier)
 	}
 	return fmt.Sprintf(
-		baseQueryFormat,
-		q.operationName,
-		fmt.Sprintf("%s_by_pk", q.model.ModelName()),
-		strings.Join(pk, ", "),
-		strings.Join(q.selectFields, "\n"),
+		"%s%s",
+		sq.queryModelName(),
+		modifier,
 	)
 }
 
-func (q *queryByPk[T, M]) Exec(c *Client) (M, error) {
-	respBytes, err := c.do(q.build())
-	if err != nil {
-		return nil, err
+func (sq SelectQueryBuilder[T, M, MF]) Select(field MF, fields ...MF) SelectQuery[T, M, MF] {
+	return SelectQuery[T, M, MF]{
+		sq:     &sq,
+		fields: append(fields, field),
 	}
+}
+
+type SelectQuery[T any, M Model[T], MF ModelField[T, M]] struct {
+	sq     *SelectQueryBuilder[T, M, MF]
+	fields []MF
+}
+
+func (sq *SelectQuery[T, M, MF]) marshalGQL() string {
+	return fmt.Sprintf(
+		"%s {\n%s\n}",
+		sq.sq.marshalGQL(),
+		ModelFieldArr[T, M, MF](sq.fields).marshalGQL(),
+	)
+}
+
+func (sq *SelectQuery[T, M, MF]) Query() string {
+	return fmt.Sprintf(
+		"query get_%s {\n%s\n}",
+		sq.sq.modelName,
+		sq.marshalGQL(),
+	)
+}
+
+func (sq *SelectQuery[T, M, MF]) Exec(client *Client) ([]T, error) {
+	respBytes, err := client.do(sq.Query())
 
 	type graphqlResponse struct {
-		Data   map[string]M   `json:"data"`
+		Data   map[string][]T `json:"data"`
 		Errors []graphqlError `json:"errors"`
 	}
 
@@ -319,5 +306,5 @@ func (q *queryByPk[T, M]) Exec(c *Client) (M, error) {
 	if err != nil {
 		return nil, err
 	}
-	return respObj.Data[q.model.ModelName()+"_by_pk"], nil
+	return respObj.Data[sq.sq.modelName], nil
 }
