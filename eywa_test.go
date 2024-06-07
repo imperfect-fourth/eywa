@@ -46,7 +46,7 @@ name
 }`
 	if assert.Equal(t, expected, q.Query()) {
 		accessKey := os.Getenv("TEST_HGE_ACCESS_KEY")
-		c := NewClient("https://aware-cowbird-80.hasura.app/v1/graphql",
+		c := NewClient("https://aware-cowbird-80.hasura.app/v1/graphql").WithHeaders(
 			map[string]string{
 				"x-hasura-access-key": accessKey,
 			},
@@ -80,7 +80,7 @@ name
 }`
 	if assert.Equal(t, expected, q.Query()) {
 		accessKey := os.Getenv("TEST_HGE_ACCESS_KEY")
-		c := NewClient("https://aware-cowbird-80.hasura.app/v1/graphql",
+		c := NewClient("https://aware-cowbird-80.hasura.app/v1/graphql").WithHeaders(
 			map[string]string{
 				"x-hasura-access-key": accessKey,
 			},
