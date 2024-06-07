@@ -54,25 +54,25 @@ func (u *User) ModelName() string {
     return "user"
 }
 
-q := Query(&User{}).Select("name").Where(
+q := Select(&User{}).Where(
     Comparisons: Comparison{
         "id": {Eq: uuid.New()},
     },
-)
+).Select("name")
 resp, err := q.Exec(client)
 ```
 
 For eg, creating a new query to get 5 users by `age` who are older than, say,
 35 but younger than 50, and selecting the field `id` is as easy as:
 ```go
-resp, err := Query(&User{}).Select("id", "age").Where(
+resp, err := Select(&User{}).Where(
     Comparisons: Comparison{
         "age": {
             Gt: 35,
             Lt: 50,
         },
     },
-).Limit(5).Exec(client)
+).Limit(5).Select("id", "age").Exec(client)
 ```
 
 ## `fieldgen` and death to raw string literals
@@ -105,17 +105,17 @@ const User_ID string = "id"
 ```
 Now, you can make the same query as:
 ```go
-resp, err := Query(&User{}).Select(
-    User_ID,
-    User_Age,
-).Where(
+resp, err := Select(&User{}).Where(&WhereExpr{
     Comparisons: Comparison{
         User_Age: {
             Gt: 35,
             Lt: 50,
         },
     },
-).Limit(5).Exec(client)
+}).Limit(5).Select(
+    User_ID,
+    User_Age,
+).Exec(client)
 ```
 
 If a model has a relationship with another model, `fieldgen` will generate a
@@ -132,13 +132,13 @@ type Order struct {
 
 ...
 
-resp, err := Query(&User{}).Select(
+resp, err := Select(&User{}).Limit(5).Select(
     User_ID,
     User_Name,
     User_Orders(
         Order_ID,
     ),
-).Limit(5).Exec(client)
+).Exec(client)
 
 //query GetUser {
 //  user(limit: 5) {
