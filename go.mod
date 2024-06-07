@@ -1,4 +1,4 @@
-module github.com/hasura/eywa
+module github.com/imperfect-fourth/eywa
 
 go 1.22.1
 

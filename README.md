@@ -81,7 +81,7 @@ strings as field names. This is prone to typos. `eywa` has a codegen tool for
 generating constants and functions for selecting fields.  
 Install fieldgen
 ```bash
-go install github.com/hasura/eywa/cmd/fieldgen
+go install github.com/imperfect-fourth/eywa/cmd/fieldgen
 ```
 Add `go:generate` comments to your code.
 ```go
