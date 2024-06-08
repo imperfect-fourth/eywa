@@ -13,12 +13,12 @@ type testTable struct {
 	ID   *int   `json:"id,omitempty"`
 }
 
-func (t *testTable) ModelName() string {
+func (t testTable) ModelName() string {
 	return "test_table"
 }
 
 func TestSelectQuery(t *testing.T) {
-	q := Select(&testTable{}).Limit(2).Offset(1).DistinctOn("age").Where(
+	q := Select[testTable]().Limit(2).Offset(1).DistinctOn("age").Where(
 		&WhereExpr{
 			Or: []*WhereExpr{
 				{
@@ -60,7 +60,7 @@ name
 }
 
 func TestUpdateQuery(t *testing.T) {
-	q := Update(&testTable{}).Where(
+	q := Update[testTable]().Where(
 		&WhereExpr{
 			Comparisons: Comparison{
 				"id": {
