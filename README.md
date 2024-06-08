@@ -1,6 +1,8 @@
 # eywa
 A flexible ORM-style GraphQL client for building graphql queries dynamically.
 
+**_This module is in pre-alpha phase._**
+
 ## Motivation
 Go GraphQL client libraries exist on two extremes, neither of which allows you
 to elegantly build queries dynamically. One extreme will have you define 
