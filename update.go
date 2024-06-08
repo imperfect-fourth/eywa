@@ -3,7 +3,6 @@ package eywa
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 func Update[M Model, MP ModelPtr[M]]() UpdateQueryBuilder[M, string] {
@@ -11,6 +10,7 @@ func Update[M Model, MP ModelPtr[M]]() UpdateQueryBuilder[M, string] {
 		querySkeleton: querySkeleton[M, string]{
 			modelName: (*new(M)).ModelName(),
 			//			fields:    append(fields, field),
+			queryArgs: make(map[string]queryArg),
 		},
 	}
 }
@@ -30,30 +30,19 @@ func (uq UpdateQueryBuilder[M, MF]) Set(set map[MF]interface{}) UpdateQueryBuild
 }
 
 func (uq UpdateQueryBuilder[M, MF]) Where(w *WhereExpr) UpdateQueryBuilder[M, MF] {
-	uq.where = w
+	wh := where{w}
+	uq.queryArgs[wh.queryArgName()] = wh
 	return uq
 }
 
 func (uq *UpdateQueryBuilder[M, MF]) marshalGQL() string {
-	var modifiers []string
-	if uq.where != nil {
-		modifiers = append(modifiers, fmt.Sprintf("where: %s", uq.where.marshalGQL()))
-	} else {
-		modifiers = append(modifiers, "where: {_not: {}}")
-	}
-
-	if uq.set != nil {
-		modifiers = append(modifiers, fmt.Sprintf("_set: %s", uq.set.marshalGQL()))
-	}
-
-	modifier := strings.Join(modifiers, ", ")
-	if modifier != "" {
-		modifier = fmt.Sprintf("(%s)", modifier)
+	wh := where{Not(&WhereExpr{})}
+	if _, ok := uq.queryArgs[wh.queryArgName()]; !ok {
+		uq.queryArgs[wh.queryArgName()] = wh
 	}
 	return fmt.Sprintf(
-		"update_%s%s",
-		uq.queryModelName(),
-		modifier,
+		"update_%s",
+		uq.querySkeleton.marshalGQL(),
 	)
 }
 

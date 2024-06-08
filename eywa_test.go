@@ -19,28 +19,14 @@ func (t testTable) ModelName() string {
 
 func TestSelectQuery(t *testing.T) {
 	q := Select[testTable]().Limit(2).Offset(1).DistinctOn("age").Where(
-		&WhereExpr{
-			Or: []*WhereExpr{
-				{
-					Comparisons: Comparison{
-						"name": {
-							Eq: "abc",
-						},
-					},
-				},
-				{
-					Comparisons: Comparison{
-						"age": {
-							Eq: 12,
-						},
-					},
-				},
-			},
-		},
+		Or(
+			Eq("name", "abc"),
+			Eq("age", 12),
+		),
 	).Select("name")
 
 	expected := `query get_test_table {
-test_table(distinct_on: age, limit: 2, offset: 1, where: {_or: [{name: {_eq: "abc"}}, {age: {_eq: 12}}]}) {
+test_table(limit: 2, offset: 1, distinct_on: age, where: {_or: [{name: {_eq: "abc"}}, {age: {_eq: 12}}]}) {
 name
 }
 }`
@@ -61,13 +47,7 @@ name
 
 func TestUpdateQuery(t *testing.T) {
 	q := Update[testTable]().Where(
-		&WhereExpr{
-			Comparisons: Comparison{
-				"id": {
-					Eq: 3,
-				},
-			},
-		},
+		Eq("id", 3),
 	).Set(map[string]interface{}{"name": "updatetest"}).Select("name", "id")
 
 	expected := `mutation update_test_table {
