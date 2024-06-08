@@ -87,6 +87,9 @@ func (uq *UpdateQuery[T, M, MF]) Query() string {
 
 func (uq *UpdateQuery[T, M, MF]) Exec(client *Client) ([]T, error) {
 	respBytes, err := client.do(uq.Query())
+	if err != nil {
+		return nil, err
+	}
 
 	type mutationReturning struct {
 		Returning []T `json:"returning"`

@@ -187,11 +187,6 @@ type Queryable interface {
 	Query() string
 }
 
-type GQLQuery struct {
-	name    string
-	queries []Queryable
-}
-
 type querySkeleton[T any, M Model[T], MF ModelField[T, M]] struct {
 	modelName string
 	// fields    ModelFieldArr[T, M, MF]
@@ -294,6 +289,9 @@ func (sq *SelectQuery[T, M, MF]) Query() string {
 
 func (sq *SelectQuery[T, M, MF]) Exec(client *Client) ([]T, error) {
 	respBytes, err := client.do(sq.Query())
+	if err != nil {
+		return nil, err
+	}
 
 	type graphqlResponse struct {
 		Data   map[string][]T `json:"data"`
