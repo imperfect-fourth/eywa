@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func Update[M Model]() UpdateQueryBuilder[M, string] {
+func Update[M Model, MP ModelPtr[M]]() UpdateQueryBuilder[M, string] {
 	return UpdateQueryBuilder[M, string]{
 		querySkeleton: querySkeleton[M, string]{
 			modelName: (*new(M)).ModelName(),

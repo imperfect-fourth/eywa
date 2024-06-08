@@ -141,6 +141,11 @@ type Model interface {
 	ModelName() string
 }
 
+type ModelPtr[T Model] interface {
+	*T
+	Model
+}
+
 type Field[M Model] string
 type ModelField[M Model] interface {
 	Field[M] | string
@@ -195,7 +200,7 @@ type querySkeleton[M Model, MF ModelField[M]] struct {
 	where      *WhereExpr
 }
 
-func Select[M Model]() SelectQueryBuilder[M, string] {
+func Select[M Model, MP ModelPtr[M]]() SelectQueryBuilder[M, string] {
 	return SelectQueryBuilder[M, string]{
 		querySkeleton: querySkeleton[M, string]{
 			modelName: (*new(M)).ModelName(),
