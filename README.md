@@ -50,11 +50,11 @@ type User struct {
 }
 
 // to satisfy the Model interface
-func (u *User) ModelName() string {
+func (u User) ModelName() string {
     return "user"
 }
 
-q := Select(&User{}).Where(
+q := Select[User]().Where(
     Comparisons: Comparison{
         "id": {Eq: uuid.New()},
     },
@@ -65,7 +65,7 @@ resp, err := q.Exec(client)
 For eg, creating a new query to get 5 users by `age` who are older than, say,
 35 but younger than 50, and selecting the field `id` is as easy as:
 ```go
-resp, err := Select(&User{}).Where(
+resp, err := Select[User]().Where(
     Comparisons: Comparison{
         "age": {
             Gt: 35,
@@ -105,7 +105,7 @@ const User_ID string = "id"
 ```
 Now, you can make the same query as:
 ```go
-resp, err := Select(&User{}).Where(&WhereExpr{
+resp, err := Select[User]().Where(&WhereExpr{
     Comparisons: Comparison{
         User_Age: {
             Gt: 35,
@@ -132,7 +132,7 @@ type Order struct {
 
 ...
 
-resp, err := Select(&User{}).Limit(5).Select(
+resp, err := Select[User]().Limit(5).Select(
     User_ID,
     User_Name,
     User_Orders(
