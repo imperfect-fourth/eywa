@@ -18,7 +18,7 @@ type UpdateQueryBuilder[M Model, MF ModelField[M]] struct {
 	querySkeleton[M, MF]
 }
 
-func (uq UpdateQueryBuilder[M, MF]) Set(s map[string]interface{}) UpdateQueryBuilder[M, MF] {
+func (uq UpdateQueryBuilder[M, F _Field[M]) Set(fields ...F) UpdateQueryBuilder[M, MF] {
 	uq.set = set(s)
 	return uq
 }

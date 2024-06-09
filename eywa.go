@@ -70,7 +70,37 @@ type ModelPtr[T Model] interface {
 	Model
 }
 
-type Field[M Model] string
+type FieldName[M Model] string
+type ModelFieldName[M Model] interface {
+	string | FieldName[M]
+}
+
+type Field[M Model] struct {
+	Name  ModelFieldName[M]
+	Value interface{}
+}
+
+func RawField[M Model](s string, v interface{}) Field[M] {
+	return Field[M]{s, v}
+}
+
+type rawField struct {
+	field string
+	val   interface{}
+}
+
+func (rf rawField) FieldName() string {
+	return rf.field
+}
+func (rf rawField) FieldValue() interface{} {
+	return rf.val
+}
+
+func RawField[T any, F _Field[any]](field string, value interface{}) rawFieldF {
+	return rawField{field, value}
+
+}
+
 type ModelField[M Model] interface {
 	Field[M] | string
 }
