@@ -1,10 +1,43 @@
 package eywa
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 )
+
+type queryArgs struct {
+	limit      *limit
+	offset     *offset
+	distinctOn *distinctOn
+	where      *where
+	set        set
+}
+
+func (qa queryArgs) marshalGQL() string {
+	fmt.Println(qa)
+	var args []string
+	args = appendArg(args, qa.limit)
+	args = appendArg(args, qa.offset)
+	args = appendArg(args, qa.distinctOn)
+	args = appendArg(args, qa.where)
+	args = appendArg(args, qa.set)
+
+	return fmt.Sprintf("(%s)", strings.Join(args, ", "))
+}
+
+func appendArg(arr []string, arg queryArg) []string {
+	if arg == nil || reflect.ValueOf(arg).IsNil() {
+		return arr
+	}
+	s := arg.marshalGQL()
+	if s == "" {
+		return arr
+	}
+	return append(arr, s)
+}
 
 type queryArg interface {
 	queryArgName() string
@@ -36,6 +69,42 @@ func (do distinctOn) queryArgName() string {
 }
 func (do distinctOn) marshalGQL() string {
 	return fmt.Sprintf("%s: %s", do.queryArgName(), do)
+}
+
+type where struct {
+	*WhereExpr
+}
+
+func (w where) queryArgName() string {
+	return "where"
+}
+func (w where) marshalGQL() string {
+	return fmt.Sprintf("%s: %s", w.queryArgName(), w.WhereExpr.marshalGQL())
+}
+
+type set map[string]interface{}
+
+func (s set) queryArgName() string {
+	return "_set"
+}
+func (s set) marshalGQL() string {
+	if s == nil {
+		return ""
+	}
+	buf := bytes.NewBuffer([]byte{})
+	first := true
+	for k, v := range s {
+		if !first {
+			buf.WriteString(", ")
+		} else {
+			first = false
+		}
+		val, _ := json.Marshal(v)
+		buf.WriteString(k)
+		buf.WriteString(": ")
+		buf.Write(val)
+	}
+	return fmt.Sprintf("%s: {%s}", s.queryArgName(), buf.String())
 }
 
 type operator string
@@ -103,17 +172,6 @@ type WhereExpr struct {
 	or  whereArr
 	not *WhereExpr
 	cmp string
-}
-
-type where struct {
-	*WhereExpr
-}
-
-func (w where) queryArgName() string {
-	return "where"
-}
-func (w where) marshalGQL() string {
-	return fmt.Sprintf("%s: %s", w.queryArgName(), w.WhereExpr.marshalGQL())
 }
 
 type whereArr []*WhereExpr

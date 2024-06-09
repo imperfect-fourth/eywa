@@ -10,35 +10,31 @@ func Update[M Model, MP ModelPtr[M]]() UpdateQueryBuilder[M, string] {
 		querySkeleton: querySkeleton[M, string]{
 			modelName: (*new(M)).ModelName(),
 			//			fields:    append(fields, field),
-			queryArgs: make(map[string]queryArg),
 		},
 	}
 }
 
 type UpdateQueryBuilder[M Model, MF ModelField[M]] struct {
 	querySkeleton[M, MF]
-	set ModelFieldMap[M, MF]
 }
 
 func (uq UpdateQueryBuilder[M, MF]) queryModelName() string {
 	return uq.modelName
 }
 
-func (uq UpdateQueryBuilder[M, MF]) Set(set map[MF]interface{}) UpdateQueryBuilder[M, MF] {
-	uq.set = set
+func (uq UpdateQueryBuilder[M, MF]) Set(s map[string]interface{}) UpdateQueryBuilder[M, MF] {
+	uq.set = set(s)
 	return uq
 }
 
 func (uq UpdateQueryBuilder[M, MF]) Where(w *WhereExpr) UpdateQueryBuilder[M, MF] {
-	wh := where{w}
-	uq.queryArgs[wh.queryArgName()] = wh
+	uq.where = &where{w}
 	return uq
 }
 
 func (uq *UpdateQueryBuilder[M, MF]) marshalGQL() string {
-	wh := where{Not(&WhereExpr{})}
-	if _, ok := uq.queryArgs[wh.queryArgName()]; !ok {
-		uq.queryArgs[wh.queryArgName()] = wh
+	if uq.where == nil {
+		uq.where = &where{Not(&WhereExpr{})}
 	}
 	return fmt.Sprintf(
 		"update_%s",

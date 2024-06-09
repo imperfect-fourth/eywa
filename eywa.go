@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 )
 
 type Client struct {
@@ -119,29 +118,17 @@ type Queryable interface {
 type querySkeleton[M Model, MF ModelField[M]] struct {
 	modelName string
 	// fields    ModelFieldArr[M, MF]
-	queryArgs map[string]queryArg
+	queryArgs
 }
 
 func (qs querySkeleton[M, MF]) marshalGQL() string {
-	var stringArr []string
-	for _, v := range qs.queryArgs {
-		s := v.marshalGQL()
-		if s != "" {
-			stringArr = append(stringArr, v.marshalGQL())
-		}
-	}
-	var args string
-	if len(stringArr) > 0 {
-		args = fmt.Sprintf("(%s)", strings.Join(stringArr, ", "))
-	}
-	return fmt.Sprintf("%s%s", qs.modelName, args)
+	return fmt.Sprintf("%s%s", qs.modelName, qs.queryArgs.marshalGQL())
 }
 
 func Select[M Model, MP ModelPtr[M]]() SelectQueryBuilder[M, string] {
 	return SelectQueryBuilder[M, string]{
 		querySkeleton: querySkeleton[M, string]{
 			modelName: (*new(M)).ModelName(),
-			queryArgs: make(map[string]queryArg),
 			//			fields:    append(fields, field),
 		},
 	}
@@ -156,26 +143,27 @@ func (sq SelectQueryBuilder[M, MF]) queryModelName() string {
 }
 
 func (sq SelectQueryBuilder[M, MF]) DistinctOn(f string) SelectQueryBuilder[M, MF] {
-	d := distinctOn(f)
-	sq.queryArgs[d.queryArgName()] = d
+	sq.distinctOn = (*distinctOn)(&f)
+	fmt.Println(sq)
 	return sq
 }
 
 func (sq SelectQueryBuilder[M, MF]) Offset(n int) SelectQueryBuilder[M, MF] {
-	o := offset(n)
-	sq.queryArgs[o.queryArgName()] = o
+	sq.offset = (*offset)(&n)
+	fmt.Println(sq)
 	return sq
 }
 
 func (sq SelectQueryBuilder[M, MF]) Limit(n int) SelectQueryBuilder[M, MF] {
-	l := limit(n)
-	sq.queryArgs[l.queryArgName()] = l
+	sq.limit = (*limit)(&n)
+	fmt.Println(sq)
+
 	return sq
 }
 
 func (sq SelectQueryBuilder[M, MF]) Where(w *WhereExpr) SelectQueryBuilder[M, MF] {
-	wh := where{w}
-	sq.queryArgs[wh.queryArgName()] = wh
+	sq.where = &where{w}
+	fmt.Println(sq)
 	return sq
 }
 
