@@ -90,27 +90,6 @@ func (mfs ModelFieldArr[M, MF]) marshalGQL() string {
 
 type ModelFieldMap[M Model, MF ModelField[M]] map[MF]interface{}
 
-func (mfs ModelFieldMap[M, MF]) marshalGQL() string {
-	if mfs == nil {
-		return "{}"
-	}
-	buf := bytes.NewBuffer([]byte("{"))
-	first := true
-	for k, v := range mfs {
-		if !first {
-			buf.WriteString(", ")
-		} else {
-			first = false
-		}
-		buf.WriteString(string(k))
-		buf.WriteString(": ")
-		valJson, _ := json.Marshal(v)
-		buf.Write(valJson)
-	}
-	buf.WriteString("}")
-	return buf.String()
-}
-
 type Queryable interface {
 	Query() string
 }
@@ -136,10 +115,6 @@ func Select[M Model, MP ModelPtr[M]]() SelectQueryBuilder[M, string] {
 
 type SelectQueryBuilder[M Model, MF ModelField[M]] struct {
 	querySkeleton[M, MF]
-}
-
-func (sq SelectQueryBuilder[M, MF]) queryModelName() string {
-	return sq.modelName
 }
 
 func (sq SelectQueryBuilder[M, MF]) DistinctOn(f string) SelectQueryBuilder[M, MF] {

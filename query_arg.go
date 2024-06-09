@@ -17,7 +17,6 @@ type queryArgs struct {
 }
 
 func (qa queryArgs) marshalGQL() string {
-	fmt.Println(qa)
 	var args []string
 	args = appendArg(args, qa.limit)
 	args = appendArg(args, qa.offset)
@@ -111,11 +110,11 @@ type operator string
 
 const (
 	eq  operator = "_eq"
-	neq          = "_neq"
-	gt           = "_gt"
-	gte          = "_gte"
-	lt           = "_lt"
-	lte          = "_lte"
+	neq operator = "_neq"
+	gt  operator = "_gt"
+	gte operator = "_gte"
+	lt  operator = "_lt"
+	lte operator = "_lte"
 )
 
 func compare(oprtr operator, field string, value interface{}) *WhereExpr {
