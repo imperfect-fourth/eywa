@@ -144,26 +144,21 @@ func (sq SelectQueryBuilder[M, MF]) queryModelName() string {
 
 func (sq SelectQueryBuilder[M, MF]) DistinctOn(f string) SelectQueryBuilder[M, MF] {
 	sq.distinctOn = (*distinctOn)(&f)
-	fmt.Println(sq)
 	return sq
 }
 
 func (sq SelectQueryBuilder[M, MF]) Offset(n int) SelectQueryBuilder[M, MF] {
 	sq.offset = (*offset)(&n)
-	fmt.Println(sq)
 	return sq
 }
 
 func (sq SelectQueryBuilder[M, MF]) Limit(n int) SelectQueryBuilder[M, MF] {
 	sq.limit = (*limit)(&n)
-	fmt.Println(sq)
-
 	return sq
 }
 
 func (sq SelectQueryBuilder[M, MF]) Where(w *WhereExpr) SelectQueryBuilder[M, MF] {
 	sq.where = &where{w}
-	fmt.Println(sq)
 	return sq
 }
 
