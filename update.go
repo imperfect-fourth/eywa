@@ -3,7 +3,6 @@ package eywa
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 func Update[M Model, MP ModelPtr[M]]() UpdateQueryBuilder[M, string] {
@@ -17,43 +16,25 @@ func Update[M Model, MP ModelPtr[M]]() UpdateQueryBuilder[M, string] {
 
 type UpdateQueryBuilder[M Model, MF ModelField[M]] struct {
 	querySkeleton[M, MF]
-	set ModelFieldMap[M, MF]
 }
 
-func (uq UpdateQueryBuilder[M, MF]) queryModelName() string {
-	return uq.modelName
-}
-
-func (uq UpdateQueryBuilder[M, MF]) Set(set map[MF]interface{}) UpdateQueryBuilder[M, MF] {
-	uq.set = set
+func (uq UpdateQueryBuilder[M, MF]) Set(s map[string]interface{}) UpdateQueryBuilder[M, MF] {
+	uq.set = set(s)
 	return uq
 }
 
 func (uq UpdateQueryBuilder[M, MF]) Where(w *WhereExpr) UpdateQueryBuilder[M, MF] {
-	uq.where = w
+	uq.where = &where{w}
 	return uq
 }
 
 func (uq *UpdateQueryBuilder[M, MF]) marshalGQL() string {
-	var modifiers []string
-	if uq.where != nil {
-		modifiers = append(modifiers, fmt.Sprintf("where: %s", uq.where.marshalGQL()))
-	} else {
-		modifiers = append(modifiers, "where: {_not: {}}")
-	}
-
-	if uq.set != nil {
-		modifiers = append(modifiers, fmt.Sprintf("_set: %s", uq.set.marshalGQL()))
-	}
-
-	modifier := strings.Join(modifiers, ", ")
-	if modifier != "" {
-		modifier = fmt.Sprintf("(%s)", modifier)
+	if uq.where == nil {
+		uq.where = &where{Not(&WhereExpr{})}
 	}
 	return fmt.Sprintf(
-		"update_%s%s",
-		uq.queryModelName(),
-		modifier,
+		"update_%s",
+		uq.querySkeleton.marshalGQL(),
 	)
 }
 

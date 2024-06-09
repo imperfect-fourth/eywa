@@ -57,9 +57,7 @@ func (u User) ModelName() string {
 }
 
 q := Select[User]().Where(
-    Comparisons: Comparison{
-        "id": {Eq: uuid.New()},
-    },
+    Eq("id", uuid.New()),
 ).Select("name")
 resp, err := q.Exec(client)
 ```
@@ -68,12 +66,10 @@ For eg, creating a new query to get 5 users by `age` who are older than, say,
 35 but younger than 50, and selecting the field `id` is as easy as:
 ```go
 resp, err := Select[User]().Where(
-    Comparisons: Comparison{
-        "age": {
-            Gt: 35,
-            Lt: 50,
-        },
-    },
+    And(
+        Gt("age", 35),
+        Lt("age", 50),
+    ),
 ).Limit(5).Select("id", "age").Exec(client)
 ```
 
@@ -107,14 +103,12 @@ const User_ID string = "id"
 ```
 Now, you can make the same query as:
 ```go
-resp, err := Select[User]().Where(&WhereExpr{
-    Comparisons: Comparison{
-        User_Age: {
-            Gt: 35,
-            Lt: 50,
-        },
-    },
-}).Limit(5).Select(
+resp, err := Select[User]().Where(
+    And(
+        Gt(User_Age, 35),
+        Lt(User_Age, 50),
+    ),
+).Limit(5).Select(
     User_ID,
     User_Age,
 ).Exec(client)
