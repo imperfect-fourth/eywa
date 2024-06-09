@@ -4,6 +4,7 @@ package eywatest
 import (
 	"github.com/imperfect-fourth/eywa"
 	"github.com/google/uuid"
+	"bytes"
 )
 
 
@@ -36,6 +37,26 @@ const testTable_custom eywa.FieldName[testTable] = "custom"
 func testTable_customField(val *customType) eywa.Field[testTable] {
 	return eywa.Field[testTable]{
 		Name: testTable_custom,
+		Value: val,
+	}
+}
+
+func testTable_testTable2(subField eywa.FieldName[testTable2], subFields ...eywa.FieldName[testTable2]) string {
+	buf := bytes.NewBuffer([]byte("testTable2 {"))
+	buf.WriteString(string(subField))
+	for _, f := range subFields {
+		buf.WriteString("\n")
+		buf.WriteString(string(f))
+	}
+	buf.WriteString("}")
+	return buf.String()
+}
+
+const testTable2_ID eywa.FieldName[testTable2] = "id"
+
+func testTable2_IDField(val *uuid.UUID) eywa.Field[testTable2] {
+	return eywa.Field[testTable2]{
+		Name: testTable2_ID,
 		Value: val,
 	}
 }

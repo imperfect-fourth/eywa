@@ -37,7 +37,14 @@ func %sField(val %s) eywa.Field[%s] {
 `
 	modelRelationshipNameFunc = `
 func %s(subField eywa.FieldName[%s], subFields ...eywa.FieldName[%s]) string {
-	return "%s {\n" + subField + "\n" + strings.Join(subFields, "\n") + "}"
+	buf := bytes.NewBuffer([]byte("%s {"))
+	buf.WriteString(string(subField))
+	for _, f := range subFields {
+		buf.WriteString("\n")
+		buf.WriteString(string(f))
+	}
+	buf.WriteString("}")
+	return buf.String()
 }
 `
 )
@@ -156,7 +163,7 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) {
 		switch fieldType.(type) {
 		case *types.Pointer:
 			if types.NewMethodSet(fieldType.(*types.Pointer)).Lookup(pkg, "ModelName") != nil {
-				contents.importsMap["strings"] = true
+				contents.importsMap["bytes"] = true
 				contents.content.WriteString(fmt.Sprintf(
 					modelRelationshipNameFunc,
 					fmt.Sprintf("%s_%s", typeName, field.Name()),
