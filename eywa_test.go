@@ -48,7 +48,7 @@ name
 func TestUpdateQuery(t *testing.T) {
 	q := Update[testTable]().Where(
 		Eq("id", 3),
-	).Set(map[string]interface{}{"name": "updatetest"}).Select("name", "id")
+	).Set(RawField[testTable]("name", "updatetest")).Select("name", "id")
 
 	expected := `mutation update_test_table {
 update_test_table(where: {id: {_eq: 3}}, _set: {name: "updatetest"}) {

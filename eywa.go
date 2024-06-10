@@ -70,67 +70,58 @@ type ModelPtr[T Model] interface {
 	Model
 }
 
-type FieldName[M Model] string
-type ModelFieldName[M Model] interface {
-	string | FieldName[M]
+type ModelFieldName[M Model] string
+type FieldName[M Model] interface {
+	string | ModelFieldName[M]
 }
+type FieldNameArr[M Model, FN FieldName[M]] []FN
 
-type Field[M Model] struct {
-	Name  ModelFieldName[M]
-	Value interface{}
-}
-
-func RawField[M Model](s string, v interface{}) Field[M] {
-	return Field[M]{s, v}
-}
-
-type rawField struct {
-	field string
-	val   interface{}
-}
-
-func (rf rawField) FieldName() string {
-	return rf.field
-}
-func (rf rawField) FieldValue() interface{} {
-	return rf.val
-}
-
-func RawField[T any, F _Field[any]](field string, value interface{}) rawFieldF {
-	return rawField{field, value}
-
-}
-
-type ModelField[M Model] interface {
-	Field[M] | string
-}
-
-type ModelFieldArr[M Model, MF ModelField[M]] []MF
-
-func (mfs ModelFieldArr[M, MF]) marshalGQL() string {
+func (fa FieldNameArr[M, FN]) marshalGQL() string {
 	buf := bytes.NewBufferString("")
-	for i, mf := range mfs {
+	for i, f := range fa {
 		if i > 0 {
 			buf.WriteString("\n")
 		}
-		buf.WriteString(string(mf))
+		buf.WriteString(string(f))
 	}
 	return buf.String()
 }
 
-type ModelFieldMap[M Model, MF ModelField[M]] map[MF]interface{}
+type Field[M Model, FN FieldName[M]] struct {
+	Name  FN
+	Value interface{}
+}
+type fieldArr[M Model, FN FieldName[M]] []Field[M, FN]
+
+func (fs fieldArr[M, FN]) marshalGQL() string {
+	buf := bytes.NewBufferString("")
+	for i, f := range fs {
+		if i > 0 {
+			buf.WriteString(", ")
+		}
+		buf.WriteString(string(f.Name))
+		buf.WriteString(": ")
+		val, _ := json.Marshal(f.Value)
+		buf.WriteString(string(val))
+	}
+	return buf.String()
+}
+
+func RawField[M Model](s string, v interface{}) Field[M, string] {
+	return Field[M, string]{s, v}
+}
 
 type Queryable interface {
 	Query() string
 }
 
-type querySkeleton[M Model, MF ModelField[M]] struct {
+type querySkeleton[M Model, FN FieldName[M]] struct {
 	modelName string
-	// fields    ModelFieldArr[M, MF]
-	queryArgs
+	// fields    ModelFieldArr[M, FN]
+	queryArgs[M, FN]
 }
 
-func (qs querySkeleton[M, MF]) marshalGQL() string {
+func (qs querySkeleton[M, FN]) marshalGQL() string {
 	return fmt.Sprintf("%s%s", qs.modelName, qs.queryArgs.marshalGQL())
 }
 
@@ -143,55 +134,55 @@ func Select[M Model, MP ModelPtr[M]]() SelectQueryBuilder[M, string] {
 	}
 }
 
-type SelectQueryBuilder[M Model, MF ModelField[M]] struct {
-	querySkeleton[M, MF]
+type SelectQueryBuilder[M Model, FN FieldName[M]] struct {
+	querySkeleton[M, FN]
 }
 
-func (sq SelectQueryBuilder[M, MF]) DistinctOn(f string) SelectQueryBuilder[M, MF] {
+func (sq SelectQueryBuilder[M, FN]) DistinctOn(f string) SelectQueryBuilder[M, FN] {
 	sq.distinctOn = (*distinctOn)(&f)
 	return sq
 }
 
-func (sq SelectQueryBuilder[M, MF]) Offset(n int) SelectQueryBuilder[M, MF] {
+func (sq SelectQueryBuilder[M, FN]) Offset(n int) SelectQueryBuilder[M, FN] {
 	sq.offset = (*offset)(&n)
 	return sq
 }
 
-func (sq SelectQueryBuilder[M, MF]) Limit(n int) SelectQueryBuilder[M, MF] {
+func (sq SelectQueryBuilder[M, FN]) Limit(n int) SelectQueryBuilder[M, FN] {
 	sq.limit = (*limit)(&n)
 	return sq
 }
 
-func (sq SelectQueryBuilder[M, MF]) Where(w *WhereExpr) SelectQueryBuilder[M, MF] {
+func (sq SelectQueryBuilder[M, FN]) Where(w *WhereExpr) SelectQueryBuilder[M, FN] {
 	sq.where = &where{w}
 	return sq
 }
 
-func (sq SelectQueryBuilder[M, MF]) marshalGQL() string {
+func (sq SelectQueryBuilder[M, FN]) marshalGQL() string {
 	return sq.querySkeleton.marshalGQL()
 }
 
-func (sq SelectQueryBuilder[M, MF]) Select(field MF, fields ...MF) SelectQuery[M, MF] {
-	return SelectQuery[M, MF]{
+func (sq SelectQueryBuilder[M, FN]) Select(field FN, fields ...FN) SelectQuery[M, FN] {
+	return SelectQuery[M, FN]{
 		sq:     &sq,
 		fields: append(fields, field),
 	}
 }
 
-type SelectQuery[M Model, MF ModelField[M]] struct {
-	sq     *SelectQueryBuilder[M, MF]
-	fields []MF
+type SelectQuery[M Model, FN FieldName[M]] struct {
+	sq     *SelectQueryBuilder[M, FN]
+	fields []FN
 }
 
-func (sq SelectQuery[M, MF]) marshalGQL() string {
+func (sq SelectQuery[M, FN]) marshalGQL() string {
 	return fmt.Sprintf(
 		"%s {\n%s\n}",
 		sq.sq.marshalGQL(),
-		ModelFieldArr[M, MF](sq.fields).marshalGQL(),
+		FieldNameArr[M, FN](sq.fields).marshalGQL(),
 	)
 }
 
-func (sq SelectQuery[M, MF]) Query() string {
+func (sq SelectQuery[M, FN]) Query() string {
 	return fmt.Sprintf(
 		"query get_%s {\n%s\n}",
 		sq.sq.modelName,
@@ -199,7 +190,7 @@ func (sq SelectQuery[M, MF]) Query() string {
 	)
 }
 
-func (sq SelectQuery[M, MF]) Exec(client *Client) ([]M, error) {
+func (sq SelectQuery[M, FN]) Exec(client *Client) ([]M, error) {
 	respBytes, err := client.do(sq.Query())
 	if err != nil {
 		return nil, err

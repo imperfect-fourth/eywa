@@ -14,21 +14,21 @@ func Update[M Model, MP ModelPtr[M]]() UpdateQueryBuilder[M, string] {
 	}
 }
 
-type UpdateQueryBuilder[M Model, MF ModelField[M]] struct {
-	querySkeleton[M, MF]
+type UpdateQueryBuilder[M Model, FN FieldName[M]] struct {
+	querySkeleton[M, FN]
 }
 
-func (uq UpdateQueryBuilder[M, F _Field[M]) Set(fields ...F) UpdateQueryBuilder[M, MF] {
-	uq.set = set(s)
+func (uq UpdateQueryBuilder[M, FN]) Set(fields ...Field[M, FN]) UpdateQueryBuilder[M, FN] {
+	uq.set = &set[M, FN]{fieldArr[M, FN](fields)}
 	return uq
 }
 
-func (uq UpdateQueryBuilder[M, MF]) Where(w *WhereExpr) UpdateQueryBuilder[M, MF] {
+func (uq UpdateQueryBuilder[M, FN]) Where(w *WhereExpr) UpdateQueryBuilder[M, FN] {
 	uq.where = &where{w}
 	return uq
 }
 
-func (uq *UpdateQueryBuilder[M, MF]) marshalGQL() string {
+func (uq *UpdateQueryBuilder[M, FN]) marshalGQL() string {
 	if uq.where == nil {
 		uq.where = &where{Not(&WhereExpr{})}
 	}
@@ -38,27 +38,27 @@ func (uq *UpdateQueryBuilder[M, MF]) marshalGQL() string {
 	)
 }
 
-func (uq UpdateQueryBuilder[M, MF]) Select(field MF, fields ...MF) UpdateQuery[M, MF] {
-	return UpdateQuery[M, MF]{
+func (uq UpdateQueryBuilder[M, FN]) Select(field FN, fields ...FN) UpdateQuery[M, FN] {
+	return UpdateQuery[M, FN]{
 		uq:     &uq,
 		fields: append(fields, field),
 	}
 }
 
-type UpdateQuery[M Model, MF ModelField[M]] struct {
-	uq     *UpdateQueryBuilder[M, MF]
-	fields []MF
+type UpdateQuery[M Model, FN FieldName[M]] struct {
+	uq     *UpdateQueryBuilder[M, FN]
+	fields []FN
 }
 
-func (uq *UpdateQuery[M, MF]) marshalGQL() string {
+func (uq *UpdateQuery[M, FN]) marshalGQL() string {
 	return fmt.Sprintf(
 		"%s {\nreturning {\n%s\n}\n}",
 		uq.uq.marshalGQL(),
-		ModelFieldArr[M, MF](uq.fields).marshalGQL(),
+		FieldNameArr[M, FN](uq.fields).marshalGQL(),
 	)
 }
 
-func (uq *UpdateQuery[M, MF]) Query() string {
+func (uq *UpdateQuery[M, FN]) Query() string {
 	return fmt.Sprintf(
 		"mutation update_%s {\n%s\n}",
 		uq.uq.modelName,
@@ -66,7 +66,7 @@ func (uq *UpdateQuery[M, MF]) Query() string {
 	)
 }
 
-func (uq *UpdateQuery[M, MF]) Exec(client *Client) ([]M, error) {
+func (uq *UpdateQuery[M, FN]) Exec(client *Client) ([]M, error) {
 	respBytes, err := client.do(uq.Query())
 	if err != nil {
 		return nil, err

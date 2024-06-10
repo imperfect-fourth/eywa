@@ -1,22 +1,21 @@
 package eywa
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
 )
 
-type queryArgs struct {
+type queryArgs[M Model, FN FieldName[M]] struct {
 	limit      *limit
 	offset     *offset
 	distinctOn *distinctOn
 	where      *where
-	set        set
+	set        *set[M, FN]
 }
 
-func (qa queryArgs) marshalGQL() string {
+func (qa queryArgs[M, FN]) marshalGQL() string {
 	var args []string
 	args = appendArg(args, qa.limit)
 	args = appendArg(args, qa.offset)
@@ -81,29 +80,18 @@ func (w where) marshalGQL() string {
 	return fmt.Sprintf("%s: %s", w.queryArgName(), w.WhereExpr.marshalGQL())
 }
 
-type set map[string]interface{}
+type set[M Model, FN FieldName[M]] struct {
+	fieldArr[M, FN]
+}
 
-func (s set) queryArgName() string {
+func (s set[M, FN]) queryArgName() string {
 	return "_set"
 }
-func (s set) marshalGQL() string {
-	if s == nil {
+func (s set[M, FN]) marshalGQL() string {
+	if s.fieldArr == nil || len(s.fieldArr) == 0 {
 		return ""
 	}
-	buf := bytes.NewBuffer([]byte{})
-	first := true
-	for k, v := range s {
-		if !first {
-			buf.WriteString(", ")
-		} else {
-			first = false
-		}
-		val, _ := json.Marshal(v)
-		buf.WriteString(k)
-		buf.WriteString(": ")
-		buf.Write(val)
-	}
-	return fmt.Sprintf("%s: {%s}", s.queryArgName(), buf.String())
+	return fmt.Sprintf("%s: {%s}", s.queryArgName(), s.fieldArr.marshalGQL())
 }
 
 type operator string
