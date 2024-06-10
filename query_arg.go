@@ -10,7 +10,7 @@ import (
 type queryArgs[M Model, FN FieldName[M]] struct {
 	limit      *limit
 	offset     *offset
-	distinctOn *distinctOn
+	distinctOn *distinctOn[M, FN]
 	where      *where
 	set        *set[M, FN]
 }
@@ -60,13 +60,15 @@ func (o offset) marshalGQL() string {
 	return fmt.Sprintf("%s: %d", o.queryArgName(), o)
 }
 
-type distinctOn string
+type distinctOn[M Model, FN FieldName[M]] struct {
+	field FN
+}
 
-func (do distinctOn) queryArgName() string {
+func (do distinctOn[M, FN]) queryArgName() string {
 	return "distinct_on"
 }
-func (do distinctOn) marshalGQL() string {
-	return fmt.Sprintf("%s: %s", do.queryArgName(), do)
+func (do distinctOn[M, FN]) marshalGQL() string {
+	return fmt.Sprintf("%s: %s", do.queryArgName(), do.field)
 }
 
 type where struct {

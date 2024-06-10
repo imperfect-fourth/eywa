@@ -138,8 +138,8 @@ type SelectQueryBuilder[M Model, FN FieldName[M]] struct {
 	querySkeleton[M, FN]
 }
 
-func (sq SelectQueryBuilder[M, FN]) DistinctOn(f string) SelectQueryBuilder[M, FN] {
-	sq.distinctOn = (*distinctOn)(&f)
+func (sq SelectQueryBuilder[M, FN]) DistinctOn(f FN) SelectQueryBuilder[M, FN] {
+	sq.distinctOn = &distinctOn[M, FN]{f}
 	return sq
 }
 
