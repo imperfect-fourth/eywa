@@ -5,24 +5,17 @@ import (
 	"fmt"
 )
 
-func update[M Model, FN FieldName[M], F Field[M]]() UpdateQueryBuilder[M, FN, F] {
-	return UpdateQueryBuilder[M, FN, F]{
-		querySkeleton: querySkeleton[M, FN, F]{
-			modelName: (*new(M)).ModelName(),
+func Update[M Model, MP ModelPtr[M]]() UpdateQueryBuilder[M, ModelFieldName[M], ModelField[M]] {
+	return UpdateQueryBuilder[M, ModelFieldName[M], ModelField[M]]{
+		QuerySkeleton: QuerySkeleton[M, ModelFieldName[M], ModelField[M]]{
+			ModelName: (*new(M)).ModelName(),
 			//			fields:    append(fields, field),
 		},
 	}
 }
 
-func UpdateUnsafe[M Model, MP ModelPtr[M]]() UpdateQueryBuilder[M, string, RawField] {
-	return update[M, string, RawField]()
-}
-func Update[M Model, MP ModelPtr[M]]() UpdateQueryBuilder[M, ModelFieldName[M], ModelField[M]] {
-	return update[M, ModelFieldName[M], ModelField[M]]()
-}
-
 type UpdateQueryBuilder[M Model, FN FieldName[M], F Field[M]] struct {
-	querySkeleton[M, FN, F]
+	QuerySkeleton[M, FN, F]
 }
 
 func (uq UpdateQueryBuilder[M, FN, F]) Set(fields ...F) UpdateQueryBuilder[M, FN, F] {
@@ -41,7 +34,7 @@ func (uq *UpdateQueryBuilder[M, FN, F]) marshalGQL() string {
 	}
 	return fmt.Sprintf(
 		"update_%s",
-		uq.querySkeleton.marshalGQL(),
+		uq.QuerySkeleton.marshalGQL(),
 	)
 }
 
@@ -68,7 +61,7 @@ func (uq *UpdateQuery[M, FN, F]) marshalGQL() string {
 func (uq *UpdateQuery[M, FN, F]) Query() string {
 	return fmt.Sprintf(
 		"mutation update_%s {\n%s\n}",
-		uq.uq.modelName,
+		uq.uq.ModelName,
 		uq.marshalGQL(),
 	)
 }
@@ -93,5 +86,5 @@ func (uq *UpdateQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
 	if err != nil {
 		return nil, err
 	}
-	return respObj.Data[fmt.Sprintf("update_%s", uq.uq.modelName)].Returning, nil
+	return respObj.Data[fmt.Sprintf("update_%s", uq.uq.ModelName)].Returning, nil
 }

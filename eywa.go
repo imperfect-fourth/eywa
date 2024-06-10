@@ -141,34 +141,27 @@ type Queryable interface {
 	Query() string
 }
 
-type querySkeleton[M Model, FN FieldName[M], F Field[M]] struct {
-	modelName string
+type QuerySkeleton[M Model, FN FieldName[M], F Field[M]] struct {
+	ModelName string
 	// fields    ModelFieldArr[M, FN, F]
 	queryArgs[M, FN, F]
 }
 
-func (qs querySkeleton[M, FN, F]) marshalGQL() string {
-	return fmt.Sprintf("%s%s", qs.modelName, qs.queryArgs.marshalGQL())
+func (qs QuerySkeleton[M, FN, F]) marshalGQL() string {
+	return fmt.Sprintf("%s%s", qs.ModelName, qs.queryArgs.marshalGQL())
 }
 
-func get[M Model, FN FieldName[M], F Field[M]]() GetQueryBuilder[M, FN, F] {
-	return GetQueryBuilder[M, FN, F]{
-		querySkeleton: querySkeleton[M, FN, F]{
-			modelName: (*new(M)).ModelName(),
+func Get[M Model, MP ModelPtr[M]]() GetQueryBuilder[M, ModelFieldName[M], ModelField[M]] {
+	return GetQueryBuilder[M, ModelFieldName[M], ModelField[M]]{
+		QuerySkeleton: QuerySkeleton[M, ModelFieldName[M], ModelField[M]]{
+			ModelName: (*new(M)).ModelName(),
 			//			fields:    append(fields, field),
 		},
 	}
 }
 
-func GetUnsafe[M Model, MP ModelPtr[M]]() GetQueryBuilder[M, string, RawField] {
-	return get[M, string, RawField]()
-}
-func Get[M Model, MP ModelPtr[M]]() GetQueryBuilder[M, ModelFieldName[M], ModelField[M]] {
-	return get[M, ModelFieldName[M], ModelField[M]]()
-}
-
 type GetQueryBuilder[M Model, FN FieldName[M], F Field[M]] struct {
-	querySkeleton[M, FN, F]
+	QuerySkeleton[M, FN, F]
 }
 
 func (sq GetQueryBuilder[M, FN, F]) DistinctOn(f FN) GetQueryBuilder[M, FN, F] {
@@ -192,7 +185,7 @@ func (sq GetQueryBuilder[M, FN, F]) Where(w *WhereExpr) GetQueryBuilder[M, FN, F
 }
 
 func (sq GetQueryBuilder[M, FN, F]) marshalGQL() string {
-	return sq.querySkeleton.marshalGQL()
+	return sq.QuerySkeleton.marshalGQL()
 }
 
 func (sq GetQueryBuilder[M, FN, F]) Select(field FN, fields ...FN) GetQuery[M, FN, F] {
@@ -218,7 +211,7 @@ func (sq GetQuery[M, FN, F]) marshalGQL() string {
 func (sq GetQuery[M, FN, F]) Query() string {
 	return fmt.Sprintf(
 		"query get_%s {\n%s\n}",
-		sq.sq.modelName,
+		sq.sq.ModelName,
 		sq.marshalGQL(),
 	)
 }
@@ -240,5 +233,5 @@ func (sq GetQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
 	if err != nil {
 		return nil, err
 	}
-	return respObj.Data[sq.sq.modelName], nil
+	return respObj.Data[sq.sq.ModelName], nil
 }
