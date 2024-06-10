@@ -87,13 +87,13 @@ func (fa FieldNameArr[M, FN]) marshalGQL() string {
 	return buf.String()
 }
 
-type Field[M Model, FN FieldName[M]] struct {
-	Name  FN
+type Field[M Model] struct {
+	Name  string
 	Value interface{}
 }
-type fieldArr[M Model, FN FieldName[M]] []Field[M, FN]
+type fieldArr[M Model] []Field[M]
 
-func (fs fieldArr[M, FN]) marshalGQL() string {
+func (fs fieldArr[M]) marshalGQL() string {
 	buf := bytes.NewBufferString("")
 	for i, f := range fs {
 		if i > 0 {
@@ -107,8 +107,8 @@ func (fs fieldArr[M, FN]) marshalGQL() string {
 	return buf.String()
 }
 
-func RawField[M Model](s string, v interface{}) Field[M, string] {
-	return Field[M, string]{s, v}
+func RawField[M Model](s string, v interface{}) Field[M] {
+	return Field[M]{s, v}
 }
 
 type Queryable interface {

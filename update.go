@@ -18,8 +18,8 @@ type UpdateQueryBuilder[M Model, FN FieldName[M]] struct {
 	querySkeleton[M, FN]
 }
 
-func (uq UpdateQueryBuilder[M, FN]) Set(fields ...Field[M, FN]) UpdateQueryBuilder[M, FN] {
-	uq.set = &set[M, FN]{fieldArr[M, FN](fields)}
+func (uq UpdateQueryBuilder[M, FN]) Set(fields ...Field[M]) UpdateQueryBuilder[M, FN] {
+	uq.set = &set[M]{fieldArr[M](fields)}
 	return uq
 }
 
