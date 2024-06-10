@@ -3,8 +3,8 @@ package eywatest
 
 import (
 	"github.com/imperfect-fourth/eywa"
-	"github.com/google/uuid"
 	"bytes"
+	"github.com/google/uuid"
 )
 
 
@@ -26,7 +26,7 @@ func testTable_AgeField(val *int) eywa.ModelField[testTable] {
 }
 const testTable_ID eywa.ModelFieldName[testTable] = "id"
 
-func testTable_IDField(val uuid.UUID) eywa.ModelField[testTable] {
+func testTable_IDField(val int) eywa.ModelField[testTable] {
 	return eywa.ModelField[testTable]{
 		Name: "id",
 		Value: val,
@@ -54,7 +54,7 @@ func testTable_testTable2(subField eywa.ModelFieldName[testTable2], subFields ..
 
 const testTable2_ID eywa.ModelFieldName[testTable2] = "id"
 
-func testTable2_IDField(val *uuid.UUID) eywa.ModelField[testTable2] {
+func testTable2_IDField(val uuid.UUID) eywa.ModelField[testTable2] {
 	return eywa.ModelField[testTable2]{
 		Name: "id",
 		Value: val,
