@@ -18,8 +18,8 @@ var (
 )
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage:")
-	fmt.Fprintf(os.Stderr, "\teywagen -types <comma separated list of type names>")
+	fmt.Fprint(os.Stderr, "Usage:")
+	fmt.Fprint(os.Stderr, "\teywagen -types <comma separated list of type names>")
 }
 
 var tagPattern = re.MustCompile(`json:"([^"]+)"`)
@@ -86,7 +86,7 @@ func main() {
 		contents.imports.WriteString(")\n\n")
 	}
 	if err := writeToFile("eywa_fields.go", contents); err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
+		fmt.Fprint(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 }
@@ -160,9 +160,9 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) {
 			fieldType = types.NewPointer(fieldType)
 		}
 
-		switch fieldType.(type) {
+		switch fieldType := fieldType.(type) {
 		case *types.Pointer:
-			if types.NewMethodSet(fieldType.(*types.Pointer)).Lookup(pkg, "ModelName") != nil {
+			if types.NewMethodSet(fieldType).Lookup(pkg, "ModelName") != nil {
 				contents.importsMap["bytes"] = true
 				contents.content.WriteString(fmt.Sprintf(
 					modelRelationshipNameFunc,
