@@ -3,6 +3,7 @@ package eywa
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -190,10 +191,18 @@ func (sq GetQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
 	}
 
 	respObj := graphqlResponse{}
-
 	err = json.NewDecoder(respBytes).Decode(&respObj)
 	if err != nil {
 		return nil, err
 	}
+
+	if len(respObj.Errors) > 0 {
+		gqlErrs := make([]error, 0, len(respObj.Errors))
+		for _, e := range respObj.Errors {
+			gqlErrs = append(gqlErrs, errors.New(e.Message))
+		}
+		return nil, errors.Join(gqlErrs...)
+	}
+
 	return respObj.Data[sq.sq.ModelName], nil
 }
