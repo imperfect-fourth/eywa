@@ -5,13 +5,20 @@ import (
 	"fmt"
 )
 
-func Update[M Model, MP ModelPtr[M]]() UpdateQueryBuilder[M, string, RawField] {
-	return UpdateQueryBuilder[M, string, RawField]{
-		querySkeleton: querySkeleton[M, string, RawField]{
+func update[M Model, FN FieldName[M], F Field[M]]() UpdateQueryBuilder[M, FN, F] {
+	return UpdateQueryBuilder[M, FN, F]{
+		querySkeleton: querySkeleton[M, FN, F]{
 			modelName: (*new(M)).ModelName(),
 			//			fields:    append(fields, field),
 		},
 	}
+}
+
+func UpdateUnsafe[M Model, MP ModelPtr[M]]() UpdateQueryBuilder[M, string, RawField] {
+	return update[M, string, RawField]()
+}
+func Update[M Model, MP ModelPtr[M]]() UpdateQueryBuilder[M, ModelFieldName[M], ModelField[M]] {
+	return update[M, ModelFieldName[M], ModelField[M]]()
 }
 
 type UpdateQueryBuilder[M Model, FN FieldName[M], F Field[M]] struct {

@@ -151,56 +151,63 @@ func (qs querySkeleton[M, FN, F]) marshalGQL() string {
 	return fmt.Sprintf("%s%s", qs.modelName, qs.queryArgs.marshalGQL())
 }
 
-func Select[M Model, MP ModelPtr[M]]() SelectQueryBuilder[M, string, RawField] {
-	return SelectQueryBuilder[M, string, RawField]{
-		querySkeleton: querySkeleton[M, string, RawField]{
+func get[M Model, FN FieldName[M], F Field[M]]() GetQueryBuilder[M, FN, F] {
+	return GetQueryBuilder[M, FN, F]{
+		querySkeleton: querySkeleton[M, FN, F]{
 			modelName: (*new(M)).ModelName(),
 			//			fields:    append(fields, field),
 		},
 	}
 }
 
-type SelectQueryBuilder[M Model, FN FieldName[M], F Field[M]] struct {
+func GetUnsafe[M Model, MP ModelPtr[M]]() GetQueryBuilder[M, string, RawField] {
+	return get[M, string, RawField]()
+}
+func Get[M Model, MP ModelPtr[M]]() GetQueryBuilder[M, ModelFieldName[M], ModelField[M]] {
+	return get[M, ModelFieldName[M], ModelField[M]]()
+}
+
+type GetQueryBuilder[M Model, FN FieldName[M], F Field[M]] struct {
 	querySkeleton[M, FN, F]
 }
 
-func (sq SelectQueryBuilder[M, FN, F]) DistinctOn(f FN) SelectQueryBuilder[M, FN, F] {
+func (sq GetQueryBuilder[M, FN, F]) DistinctOn(f FN) GetQueryBuilder[M, FN, F] {
 	sq.distinctOn = &distinctOn[M, FN]{f}
 	return sq
 }
 
-func (sq SelectQueryBuilder[M, FN, F]) Offset(n int) SelectQueryBuilder[M, FN, F] {
+func (sq GetQueryBuilder[M, FN, F]) Offset(n int) GetQueryBuilder[M, FN, F] {
 	sq.offset = (*offset)(&n)
 	return sq
 }
 
-func (sq SelectQueryBuilder[M, FN, F]) Limit(n int) SelectQueryBuilder[M, FN, F] {
+func (sq GetQueryBuilder[M, FN, F]) Limit(n int) GetQueryBuilder[M, FN, F] {
 	sq.limit = (*limit)(&n)
 	return sq
 }
 
-func (sq SelectQueryBuilder[M, FN, F]) Where(w *WhereExpr) SelectQueryBuilder[M, FN, F] {
+func (sq GetQueryBuilder[M, FN, F]) Where(w *WhereExpr) GetQueryBuilder[M, FN, F] {
 	sq.where = &where{w}
 	return sq
 }
 
-func (sq SelectQueryBuilder[M, FN, F]) marshalGQL() string {
+func (sq GetQueryBuilder[M, FN, F]) marshalGQL() string {
 	return sq.querySkeleton.marshalGQL()
 }
 
-func (sq SelectQueryBuilder[M, FN, F]) Select(field FN, fields ...FN) SelectQuery[M, FN, F] {
-	return SelectQuery[M, FN, F]{
+func (sq GetQueryBuilder[M, FN, F]) Select(field FN, fields ...FN) GetQuery[M, FN, F] {
+	return GetQuery[M, FN, F]{
 		sq:     &sq,
 		fields: append(fields, field),
 	}
 }
 
-type SelectQuery[M Model, FN FieldName[M], F Field[M]] struct {
-	sq     *SelectQueryBuilder[M, FN, F]
+type GetQuery[M Model, FN FieldName[M], F Field[M]] struct {
+	sq     *GetQueryBuilder[M, FN, F]
 	fields []FN
 }
 
-func (sq SelectQuery[M, FN, F]) marshalGQL() string {
+func (sq GetQuery[M, FN, F]) marshalGQL() string {
 	return fmt.Sprintf(
 		"%s {\n%s\n}",
 		sq.sq.marshalGQL(),
@@ -208,7 +215,7 @@ func (sq SelectQuery[M, FN, F]) marshalGQL() string {
 	)
 }
 
-func (sq SelectQuery[M, FN, F]) Query() string {
+func (sq GetQuery[M, FN, F]) Query() string {
 	return fmt.Sprintf(
 		"query get_%s {\n%s\n}",
 		sq.sq.modelName,
@@ -216,7 +223,7 @@ func (sq SelectQuery[M, FN, F]) Query() string {
 	)
 }
 
-func (sq SelectQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
+func (sq GetQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
 	respBytes, err := client.do(sq.Query())
 	if err != nil {
 		return nil, err

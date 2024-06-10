@@ -18,7 +18,7 @@ func (t testTable) ModelName() string {
 }
 
 func TestSelectQuery(t *testing.T) {
-	q := Select[testTable]().Limit(2).Offset(1).DistinctOn("age").Where(
+	q := GetUnsafe[testTable]().Limit(2).Offset(1).DistinctOn("age").Where(
 		Or(
 			Eq[testTable](RawField{"name", "abc"}),
 			Eq[testTable](RawField{"age", 12}),
@@ -46,8 +46,8 @@ name
 }
 
 func TestUpdateQuery(t *testing.T) {
-	q := Update[testTable]().Where(
-		Eq[testTable](f),
+	q := UpdateUnsafe[testTable]().Where(
+		Eq[testTable](RawField{"id", 3}),
 	).Set(RawField{"name", "updatetest"}).Select("name", "id")
 
 	expected := `mutation update_test_table {
