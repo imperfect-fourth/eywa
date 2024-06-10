@@ -24,11 +24,11 @@ name
 }`
 	if assert.Equal(t, expected, q.Query()) {
 		accessKey := os.Getenv("TEST_HGE_ACCESS_KEY")
-		c := eywa.NewClient("https://aware-cowbird-80.hasura.app/v1/graphql",
-			map[string]string{
+		c := eywa.NewClient("https://aware-cowbird-80.hasura.app/v1/graphql", &eywa.ClientOpts{
+			Headers: map[string]string{
 				"x-hasura-access-key": accessKey,
 			},
-		)
+		})
 
 		resp, err := q.Exec(c)
 
@@ -55,11 +55,11 @@ name
 }`
 	if assert.Equal(t, expected, q.Query()) {
 		accessKey := os.Getenv("TEST_HGE_ACCESS_KEY")
-		c := eywa.NewClient("https://aware-cowbird-80.hasura.app/v1/graphql",
-			map[string]string{
+		c := eywa.NewClient("https://aware-cowbird-80.hasura.app/v1/graphql", &eywa.ClientOpts{
+			Headers: map[string]string{
 				"x-hasura-access-key": accessKey,
 			},
-		)
+		})
 
 		resp, err := q.Exec(c)
 

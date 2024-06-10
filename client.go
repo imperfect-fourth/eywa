@@ -13,24 +13,29 @@ type Client struct {
 	headers    map[string]string
 }
 
+type ClientOpts struct {
+	HttpClient *http.Client
+	Headers    map[string]string
+}
+
 // NewClient accepts a graphql endpoint and returns back a Client.
 // It uses the http.DefaultClient as the underlying http client by default.
-func NewClient(gqlEndpoint string) *Client {
-	return &Client{
+func NewClient(gqlEndpoint string, opt *ClientOpts) *Client {
+	c := &Client{
 		endpoint:   gqlEndpoint,
 		httpClient: http.DefaultClient,
 	}
-}
 
-// WithHeaders adds the given headers to all the requests made by the Client.
-func (c *Client) WithHeaders(headers map[string]string) *Client {
-	c.headers = headers
-	return c
-}
+	if opt != nil {
+		if opt.HttpClient != nil {
+			c.httpClient = opt.HttpClient
+		}
 
-// WithHttpClient sets the underlying HTTP client that will be used for making graphql calls.
-func (c *Client) WithHttpClient(hc *http.Client) *Client {
-	c.httpClient = hc
+		if opt.Headers != nil && len(opt.Headers) > 0 {
+			c.headers = opt.Headers
+		}
+	}
+
 	return c
 }
 
