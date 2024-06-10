@@ -8,40 +8,40 @@ import (
 )
 
 
-const testTable_Name eywa.FieldName[testTable] = "name"
+const testTable_Name eywa.ModelFieldName[testTable] = "name"
 
-func testTable_NameField(val string) eywa.Field[testTable] {
-	return eywa.Field[testTable]{
-		Name: testTable_Name,
+func testTable_NameField(val string) eywa.ModelField[testTable] {
+	return eywa.ModelField[testTable]{
+		Name: "name",
 		Value: val,
 	}
 }
-const testTable_Age eywa.FieldName[testTable] = "age"
+const testTable_Age eywa.ModelFieldName[testTable] = "age"
 
-func testTable_AgeField(val *int) eywa.Field[testTable] {
-	return eywa.Field[testTable]{
-		Name: testTable_Age,
+func testTable_AgeField(val *int) eywa.ModelField[testTable] {
+	return eywa.ModelField[testTable]{
+		Name: "age",
 		Value: val,
 	}
 }
-const testTable_ID eywa.FieldName[testTable] = "id"
+const testTable_ID eywa.ModelFieldName[testTable] = "id"
 
-func testTable_IDField(val uuid.UUID) eywa.Field[testTable] {
-	return eywa.Field[testTable]{
-		Name: testTable_ID,
+func testTable_IDField(val uuid.UUID) eywa.ModelField[testTable] {
+	return eywa.ModelField[testTable]{
+		Name: "id",
 		Value: val,
 	}
 }
-const testTable_custom eywa.FieldName[testTable] = "custom"
+const testTable_custom eywa.ModelFieldName[testTable] = "custom"
 
-func testTable_customField(val *customType) eywa.Field[testTable] {
-	return eywa.Field[testTable]{
-		Name: testTable_custom,
+func testTable_customField(val *customType) eywa.ModelField[testTable] {
+	return eywa.ModelField[testTable]{
+		Name: "custom",
 		Value: val,
 	}
 }
 
-func testTable_testTable2(subField eywa.FieldName[testTable2], subFields ...eywa.FieldName[testTable2]) string {
+func testTable_testTable2(subField eywa.ModelFieldName[testTable2], subFields ...eywa.ModelFieldName[testTable2]) string {
 	buf := bytes.NewBuffer([]byte("testTable2 {"))
 	buf.WriteString(string(subField))
 	for _, f := range subFields {
@@ -52,11 +52,11 @@ func testTable_testTable2(subField eywa.FieldName[testTable2], subFields ...eywa
 	return buf.String()
 }
 
-const testTable2_ID eywa.FieldName[testTable2] = "id"
+const testTable2_ID eywa.ModelFieldName[testTable2] = "id"
 
-func testTable2_IDField(val *uuid.UUID) eywa.Field[testTable2] {
-	return eywa.Field[testTable2]{
-		Name: testTable2_ID,
+func testTable2_IDField(val *uuid.UUID) eywa.ModelField[testTable2] {
+	return eywa.ModelField[testTable2]{
+		Name: "id",
 		Value: val,
 	}
 }
