@@ -1,6 +1,8 @@
 # eywa
 A flexible ORM-style GraphQL client for building graphql queries dynamically.
 
+**_This module is in pre-alpha phase._**
+
 ## Motivation
 Go GraphQL client libraries exist on two extremes, neither of which allows you
 to elegantly build queries dynamically. One extreme will have you define 
@@ -50,14 +52,12 @@ type User struct {
 }
 
 // to satisfy the Model interface
-func (u *User) ModelName() string {
+func (u User) ModelName() string {
     return "user"
 }
 
-q := Select(&User{}).Where(
-    Comparisons: Comparison{
-        "id": {Eq: uuid.New()},
-    },
+q := GetUnsafe[User]().Where(
+    Eq[User]("id", uuid.New()),
 ).Select("name")
 resp, err := q.Exec(client)
 ```
@@ -65,13 +65,11 @@ resp, err := q.Exec(client)
 For eg, creating a new query to get 5 users by `age` who are older than, say,
 35 but younger than 50, and selecting the field `id` is as easy as:
 ```go
-resp, err := Select(&User{}).Where(
-    Comparisons: Comparison{
-        "age": {
-            Gt: 35,
-            Lt: 50,
-        },
-    },
+resp, err := GetUnsafe[User]().Where(
+    And(
+        Gt[User]("age", 35),
+        Lt[User]("age", 50),
+    ),
 ).Limit(5).Select("id", "age").Exec(client)
 ```
 
@@ -105,14 +103,12 @@ const User_ID string = "id"
 ```
 Now, you can make the same query as:
 ```go
-resp, err := Select(&User{}).Where(&WhereExpr{
-    Comparisons: Comparison{
-        User_Age: {
-            Gt: 35,
-            Lt: 50,
-        },
-    },
-}).Limit(5).Select(
+resp, err := Get[User]().Where(
+    And(
+        Gt(User_Age, 35),
+        Lt(User_Age, 50),
+    ),
+).Limit(5).Select(
     User_ID,
     User_Age,
 ).Exec(client)
@@ -132,7 +128,7 @@ type Order struct {
 
 ...
 
-resp, err := Select(&User{}).Limit(5).Select(
+resp, err := Select[User]().Limit(5).Select(
     User_ID,
     User_Name,
     User_Orders(
