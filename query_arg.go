@@ -7,15 +7,15 @@ import (
 	"strings"
 )
 
-type queryArgs[M Model, FN FieldName[M]] struct {
+type queryArgs[M Model, FN FieldName[M], F Field[M]] struct {
 	limit      *limit
 	offset     *offset
 	distinctOn *distinctOn[M, FN]
 	where      *where
-	set        *set[M]
+	set        *set[M, F]
 }
 
-func (qa queryArgs[M, FN]) marshalGQL() string {
+func (qa queryArgs[M, FN, F]) marshalGQL() string {
 	var args []string
 	args = appendArg(args, qa.limit)
 	args = appendArg(args, qa.offset)
@@ -82,14 +82,14 @@ func (w where) marshalGQL() string {
 	return fmt.Sprintf("%s: %s", w.queryArgName(), w.WhereExpr.marshalGQL())
 }
 
-type set[M Model] struct {
-	fieldArr[M]
+type set[M Model, F Field[M]] struct {
+	fieldArr[M, F]
 }
 
-func (s set[M]) queryArgName() string {
+func (s set[M, F]) queryArgName() string {
 	return "_set"
 }
-func (s set[M]) marshalGQL() string {
+func (s set[M, F]) marshalGQL() string {
 	if s.fieldArr == nil || len(s.fieldArr) == 0 {
 		return ""
 	}
@@ -107,35 +107,35 @@ const (
 	lte operator = "_lte"
 )
 
-func compare[M Model](oprtr operator, field Field[M]) *WhereExpr {
-	val, _ := json.Marshal(field.Value)
+func compare[M Model, F Field[M]](oprtr operator, field F) *WhereExpr {
+	val, _ := json.Marshal(field.GetValue())
 	return &WhereExpr{
-		cmp: fmt.Sprintf("%s: {%s: %s}", field.Name, oprtr, string(val)),
+		cmp: fmt.Sprintf("%s: {%s: %s}", field.GetName(), oprtr, string(val)),
 	}
 }
 
-func Eq[M Model](field Field[M]) *WhereExpr {
-	return compare(eq, field)
+func Eq[M Model, F Field[M]](field F) *WhereExpr {
+	return compare[M](eq, field)
 }
 
-func Neq[M Model](field Field[M]) *WhereExpr {
-	return compare(neq, field)
+func Neq[M Model, F Field[M]](field F) *WhereExpr {
+	return compare[M](neq, field)
 }
 
-func Gt[M Model](field Field[M]) *WhereExpr {
-	return compare(gt, field)
+func Gt[M Model, F Field[M]](field F) *WhereExpr {
+	return compare[M](gt, field)
 }
 
-func Gte[M Model](field Field[M]) *WhereExpr {
-	return compare(gte, field)
+func Gte[M Model, F Field[M]](field F) *WhereExpr {
+	return compare[M](gte, field)
 }
 
-func Lt[M Model](field Field[M]) *WhereExpr {
-	return compare(lt, field)
+func Lt[M Model, F Field[M]](field F) *WhereExpr {
+	return compare[M](lt, field)
 }
 
-func Lte[M Model](field Field[M]) *WhereExpr {
-	return compare(lte, field)
+func Lte[M Model, F Field[M]](field F) *WhereExpr {
+	return compare[M](lte, field)
 }
 
 func Not(w *WhereExpr) *WhereExpr {
