@@ -95,8 +95,12 @@ type RawField struct {
 func (f RawField) GetName() string {
 	return f.Name
 }
-func (f RawField) GetValue() interface{} {
-	return f.Value
+func (f RawField) GetValue() string {
+	if val, ok := f.Value.(gqlMarshaller); ok {
+		return val.marshalGQL()
+	}
+	val, _ := json.Marshal(f.Value)
+	return string(val)
 }
 
 type ModelField[M Model] struct {
@@ -107,14 +111,18 @@ type ModelField[M Model] struct {
 func (f ModelField[M]) GetName() string {
 	return f.Name
 }
-func (f ModelField[M]) GetValue() interface{} {
-	return f.Value
+func (f ModelField[M]) GetValue() string {
+	if val, ok := f.Value.(gqlMarshaller); ok {
+		return val.marshalGQL()
+	}
+	val, _ := json.Marshal(f.Value)
+	return string(val)
 }
 
 type Field[M Model] interface {
 	RawField | ModelField[M]
 	GetName() string
-	GetValue() interface{}
+	GetValue() string
 }
 
 type fieldArr[M Model, F Field[M]] []F
@@ -127,8 +135,7 @@ func (fs fieldArr[M, MF]) marshalGQL() string {
 		}
 		buf.WriteString(string(f.GetName()))
 		buf.WriteString(": ")
-		val, _ := json.Marshal(f.GetValue())
-		buf.WriteString(string(val))
+		buf.WriteString(f.GetValue())
 	}
 	return buf.String()
 }

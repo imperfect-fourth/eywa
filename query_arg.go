@@ -1,7 +1,6 @@
 package eywa
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -108,9 +107,8 @@ const (
 )
 
 func compare[M Model, F Field[M]](oprtr operator, field F) *WhereExpr {
-	val, _ := json.Marshal(field.GetValue())
 	return &WhereExpr{
-		cmp: fmt.Sprintf("%s: {%s: %s}", field.GetName(), oprtr, string(val)),
+		cmp: fmt.Sprintf("%s: {%s: %s}", field.GetName(), oprtr, field.GetValue()),
 	}
 }
 

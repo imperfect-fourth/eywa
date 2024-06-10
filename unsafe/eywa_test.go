@@ -10,9 +10,10 @@ import (
 )
 
 type testTable struct {
-	Name string `json:"name"`
-	Age  int    `json:"age"`
-	ID   *int   `json:"id,omitempty"`
+	Name  string          `json:"name"`
+	Age   int             `json:"age"`
+	ID    *int            `json:"id,omitempty"`
+	State eywa.HasuraEnum `json:"state"`
 }
 
 func (t testTable) ModelName() string {
@@ -50,10 +51,10 @@ name
 func TestUpdateQuery(t *testing.T) {
 	q := Update[testTable]().Where(
 		eywa.Eq[testTable](eywa.RawField{"id", 3}),
-	).Set(eywa.RawField{"name", "updatetest"}).Select("name", "id")
+	).Set(eywa.RawField{"name", "updatetest"}, eywa.RawField{"state", eywa.HasuraEnum("state1")}).Select("name", "id")
 
 	expected := `mutation update_test_table {
-update_test_table(where: {id: {_eq: 3}}, _set: {name: "updatetest"}) {
+update_test_table(where: {id: {_eq: 3}}, _set: {name: "updatetest", state: state1}) {
 returning {
 id
 name
