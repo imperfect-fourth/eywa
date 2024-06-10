@@ -1,9 +1,11 @@
-package eywa
+// nolint
+package unsafe
 
 import (
 	"os"
 	"testing"
 
+	"github.com/imperfect-fourth/eywa"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,10 +20,10 @@ func (t testTable) ModelName() string {
 }
 
 func TestSelectQuery(t *testing.T) {
-	q := Select[testTable]().Limit(2).Offset(1).DistinctOn("age").Where(
-		Or(
-			Eq("name", "abc"),
-			Eq("age", 12),
+	q := Get[testTable]().Limit(2).Offset(1).DistinctOn("age").Where(
+		eywa.Or(
+			eywa.Eq[testTable](eywa.RawField{"name", "abc"}),
+			eywa.Eq[testTable](eywa.RawField{"age", 12}),
 		),
 	).Select("name")
 
@@ -32,7 +34,7 @@ name
 }`
 	if assert.Equal(t, expected, q.Query()) {
 		accessKey := os.Getenv("TEST_HGE_ACCESS_KEY")
-		c := NewClient("https://aware-cowbird-80.hasura.app/v1/graphql",
+		c := eywa.NewClient("https://aware-cowbird-80.hasura.app/v1/graphql",
 			map[string]string{
 				"x-hasura-access-key": accessKey,
 			},
@@ -47,8 +49,8 @@ name
 
 func TestUpdateQuery(t *testing.T) {
 	q := Update[testTable]().Where(
-		Eq("id", 3),
-	).Set(map[string]interface{}{"name": "updatetest"}).Select("name", "id")
+		eywa.Eq[testTable](eywa.RawField{"id", 3}),
+	).Set(eywa.RawField{"name", "updatetest"}).Select("name", "id")
 
 	expected := `mutation update_test_table {
 update_test_table(where: {id: {_eq: 3}}, _set: {name: "updatetest"}) {
@@ -60,7 +62,7 @@ name
 }`
 	if assert.Equal(t, expected, q.Query()) {
 		accessKey := os.Getenv("TEST_HGE_ACCESS_KEY")
-		c := NewClient("https://aware-cowbird-80.hasura.app/v1/graphql",
+		c := eywa.NewClient("https://aware-cowbird-80.hasura.app/v1/graphql",
 			map[string]string{
 				"x-hasura-access-key": accessKey,
 			},

@@ -56,8 +56,8 @@ func (u User) ModelName() string {
     return "user"
 }
 
-q := Select[User]().Where(
-    Eq("id", uuid.New()),
+q := GetUnsafe[User]().Where(
+    Eq[User]("id", uuid.New()),
 ).Select("name")
 resp, err := q.Exec(client)
 ```
@@ -65,10 +65,10 @@ resp, err := q.Exec(client)
 For eg, creating a new query to get 5 users by `age` who are older than, say,
 35 but younger than 50, and selecting the field `id` is as easy as:
 ```go
-resp, err := Select[User]().Where(
+resp, err := GetUnsafe[User]().Where(
     And(
-        Gt("age", 35),
-        Lt("age", 50),
+        Gt[User]("age", 35),
+        Lt[User]("age", 50),
     ),
 ).Limit(5).Select("id", "age").Exec(client)
 ```
@@ -103,7 +103,7 @@ const User_ID string = "id"
 ```
 Now, you can make the same query as:
 ```go
-resp, err := Select[User]().Where(
+resp, err := Get[User]().Where(
     And(
         Gt(User_Age, 35),
         Lt(User_Age, 50),

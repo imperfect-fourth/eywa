@@ -1,22 +1,21 @@
 package eywa
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
 )
 
-type queryArgs struct {
+type queryArgs[M Model, FN FieldName[M], F Field[M]] struct {
 	limit      *limit
 	offset     *offset
-	distinctOn *distinctOn
+	distinctOn *distinctOn[M, FN]
 	where      *where
-	set        set
+	set        *set[M, F]
 }
 
-func (qa queryArgs) marshalGQL() string {
+func (qa queryArgs[M, FN, F]) marshalGQL() string {
 	var args []string
 	args = appendArg(args, qa.limit)
 	args = appendArg(args, qa.offset)
@@ -61,13 +60,15 @@ func (o offset) marshalGQL() string {
 	return fmt.Sprintf("%s: %d", o.queryArgName(), o)
 }
 
-type distinctOn string
+type distinctOn[M Model, FN FieldName[M]] struct {
+	field FN
+}
 
-func (do distinctOn) queryArgName() string {
+func (do distinctOn[M, FN]) queryArgName() string {
 	return "distinct_on"
 }
-func (do distinctOn) marshalGQL() string {
-	return fmt.Sprintf("%s: %s", do.queryArgName(), do)
+func (do distinctOn[M, FN]) marshalGQL() string {
+	return fmt.Sprintf("%s: %s", do.queryArgName(), do.field)
 }
 
 type where struct {
@@ -81,29 +82,18 @@ func (w where) marshalGQL() string {
 	return fmt.Sprintf("%s: %s", w.queryArgName(), w.WhereExpr.marshalGQL())
 }
 
-type set map[string]interface{}
+type set[M Model, F Field[M]] struct {
+	fieldArr[M, F]
+}
 
-func (s set) queryArgName() string {
+func (s set[M, F]) queryArgName() string {
 	return "_set"
 }
-func (s set) marshalGQL() string {
-	if s == nil {
+func (s set[M, F]) marshalGQL() string {
+	if s.fieldArr == nil || len(s.fieldArr) == 0 {
 		return ""
 	}
-	buf := bytes.NewBuffer([]byte{})
-	first := true
-	for k, v := range s {
-		if !first {
-			buf.WriteString(", ")
-		} else {
-			first = false
-		}
-		val, _ := json.Marshal(v)
-		buf.WriteString(k)
-		buf.WriteString(": ")
-		buf.Write(val)
-	}
-	return fmt.Sprintf("%s: {%s}", s.queryArgName(), buf.String())
+	return fmt.Sprintf("%s: {%s}", s.queryArgName(), s.fieldArr.marshalGQL())
 }
 
 type operator string
@@ -117,35 +107,35 @@ const (
 	lte operator = "_lte"
 )
 
-func compare(oprtr operator, field string, value interface{}) *WhereExpr {
-	val, _ := json.Marshal(value)
+func compare[M Model, F Field[M]](oprtr operator, field F) *WhereExpr {
+	val, _ := json.Marshal(field.GetValue())
 	return &WhereExpr{
-		cmp: fmt.Sprintf("%s: {%s: %s}", field, oprtr, string(val)),
+		cmp: fmt.Sprintf("%s: {%s: %s}", field.GetName(), oprtr, string(val)),
 	}
 }
 
-func Eq(field string, value interface{}) *WhereExpr {
-	return compare(eq, field, value)
+func Eq[M Model, F Field[M]](field F) *WhereExpr {
+	return compare[M](eq, field)
 }
 
-func Neq(field string, value interface{}) *WhereExpr {
-	return compare(neq, field, value)
+func Neq[M Model, F Field[M]](field F) *WhereExpr {
+	return compare[M](neq, field)
 }
 
-func Gt(field string, value interface{}) *WhereExpr {
-	return compare(gt, field, value)
+func Gt[M Model, F Field[M]](field F) *WhereExpr {
+	return compare[M](gt, field)
 }
 
-func Gte(field string, value interface{}) *WhereExpr {
-	return compare(gte, field, value)
+func Gte[M Model, F Field[M]](field F) *WhereExpr {
+	return compare[M](gte, field)
 }
 
-func Lt(field string, value interface{}) *WhereExpr {
-	return compare(lt, field, value)
+func Lt[M Model, F Field[M]](field F) *WhereExpr {
+	return compare[M](lt, field)
 }
 
-func Lte(field string, value interface{}) *WhereExpr {
-	return compare(lte, field, value)
+func Lte[M Model, F Field[M]](field F) *WhereExpr {
+	return compare[M](lte, field)
 }
 
 func Not(w *WhereExpr) *WhereExpr {
