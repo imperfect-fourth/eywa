@@ -3,6 +3,7 @@ package eywa
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -64,6 +65,13 @@ func (c *Client) do(q string) (*bytes.Buffer, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	switch {
+	case resp.StatusCode > 299 && resp.StatusCode < 399:
+		return nil, fmt.Errorf("redirected request with http status code: %d", resp.StatusCode)
+	case resp.StatusCode > 399:
+		return nil, fmt.Errorf("error response with http status code: %d", resp.StatusCode)
+	}
 
 	var respBytes bytes.Buffer
 	_, err = io.Copy(&respBytes, resp.Body)
