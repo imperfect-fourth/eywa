@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 )
 
 type graphqlRequest struct {
@@ -56,6 +57,13 @@ func (f RawField) GetValue() string {
 		return val.marshalGQL()
 	}
 	val, _ := json.Marshal(f.Value)
+	if vt := reflect.TypeOf(f.Value); vt.Kind() == reflect.Ptr {
+		if vt.Elem().Kind() == reflect.Struct {
+			val, _ = json.Marshal(string(val))
+		}
+	} else if vt.Kind() == reflect.Struct {
+		val, _ = json.Marshal(string(val))
+	}
 	return string(val)
 }
 
@@ -71,7 +79,15 @@ func (f ModelField[M]) GetValue() string {
 	if val, ok := f.Value.(gqlMarshaller); ok {
 		return val.marshalGQL()
 	}
+
 	val, _ := json.Marshal(f.Value)
+	if vt := reflect.TypeOf(f.Value); vt.Kind() == reflect.Ptr {
+		if vt.Elem().Kind() == reflect.Struct {
+			val, _ = json.Marshal(string(val))
+		}
+	} else if vt.Kind() == reflect.Struct {
+		val, _ = json.Marshal(string(val))
+	}
 	return string(val)
 }
 

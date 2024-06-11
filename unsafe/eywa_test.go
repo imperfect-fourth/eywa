@@ -10,14 +10,22 @@ import (
 )
 
 type testTable struct {
-	Name  string          `json:"name"`
-	Age   int             `json:"age"`
-	ID    *int            `json:"id,omitempty"`
-	State eywa.HasuraEnum `json:"state"`
+	Name     string          `json:"name"`
+	Age      int             `json:"age"`
+	ID       *int            `json:"id,omitempty"`
+	State    eywa.HasuraEnum `json:"state"`
+	JsonBCol jsonbcol        `json:"jsonb_col"`
 }
 
 func (t testTable) ModelName() string {
 	return "test_table"
+}
+
+type jsonbcol struct {
+	StrField  string `json:"str_field"`
+	IntField  int    `json:"int_field"`
+	BoolField bool   `json:"bool_field"`
+	ArrField  []int  `json:"arr_field,omitempty"`
 }
 
 func TestSelectQuery(t *testing.T) {
@@ -51,10 +59,19 @@ name
 func TestUpdateQuery(t *testing.T) {
 	q := Update[testTable]().Where(
 		eywa.Eq[testTable](eywa.RawField{"id", 3}),
-	).Set(eywa.RawField{"name", "updatetest"}, eywa.RawField{"state", eywa.HasuraEnum("state1")}).Select("name", "id")
+	).Set(
+		eywa.RawField{"name", "updatetest"},
+		eywa.RawField{"state", eywa.HasuraEnum("state1")},
+		eywa.RawField{"jsonb_col", jsonbcol{
+			StrField:  "abcd",
+			IntField:  2,
+			BoolField: false,
+			ArrField:  []int{1, 2, 3},
+		},
+		}).Select("name", "id")
 
 	expected := `mutation update_test_table {
-update_test_table(where: {id: {_eq: 3}}, _set: {name: "updatetest", state: state1}) {
+update_test_table(where: {id: {_eq: 3}}, _set: {name: "updatetest", state: state1, jsonb_col: "{\"str_field\":\"abcd\",\"int_field\":2,\"bool_field\":false,\"arr_field\":[1,2,3]}"}) {
 returning {
 id
 name

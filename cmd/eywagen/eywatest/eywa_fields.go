@@ -51,6 +51,14 @@ func testTable_testTable2(subField eywa.ModelFieldName[testTable2], subFields ..
 	buf.WriteString("}")
 	return buf.String()
 }
+const testTable_JsonBCol eywa.ModelFieldName[testTable] = "jsonb_col"
+
+func testTable_JsonBColField(val jsonbcol) eywa.ModelField[testTable] {
+	return eywa.ModelField[testTable]{
+		Name: "jsonb_col",
+		Value: val,
+	}
+}
 
 const testTable2_ID eywa.ModelFieldName[testTable2] = "id"
 

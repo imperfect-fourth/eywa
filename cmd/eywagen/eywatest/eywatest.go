@@ -9,6 +9,7 @@ type testTable struct {
 	ID         int         `json:"id,omitempty"`
 	custom     *customType `json:"custom"`
 	testTable2 *testTable2 `json:"testTable2"`
+	JsonBCol   jsonbcol    `json:"jsonb_col"`
 }
 
 func (t testTable) ModelName() string {
@@ -23,4 +24,11 @@ type testTable2 struct {
 
 func (t testTable2) ModelName() string {
 	return "test_table2"
+}
+
+type jsonbcol struct {
+	StrField  string `json:"str_field"`
+	IntField  int    `json:"int_field"`
+	BoolField bool   `json:"bool_field"`
+	ArrField  []int  `json:"arr_field,omitempty"`
 }

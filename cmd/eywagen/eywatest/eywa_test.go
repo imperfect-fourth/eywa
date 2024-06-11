@@ -40,13 +40,21 @@ name
 func TestUpdateQuery(t *testing.T) {
 	q := eywa.Update[testTable]().Where(
 		eywa.Eq[testTable](testTable_IDField(3)),
-	).Set(testTable_NameField("updatetest")).Select(
+	).Set(
+		testTable_NameField("updatetest"),
+		testTable_JsonBColField(jsonbcol{
+			StrField:  "abcd",
+			IntField:  2,
+			BoolField: false,
+			ArrField:  []int{1, 2, 3},
+		}),
+	).Select(
 		testTable_Name,
 		testTable_ID,
 	)
 
 	expected := `mutation update_test_table {
-update_test_table(where: {id: {_eq: 3}}, _set: {name: "updatetest"}) {
+update_test_table(where: {id: {_eq: 3}}, _set: {name: "updatetest", jsonb_col: "{\"str_field\":\"abcd\",\"int_field\":2,\"bool_field\":false,\"arr_field\":[1,2,3]}"}) {
 returning {
 id
 name
