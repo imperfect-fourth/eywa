@@ -3,53 +3,9 @@ package eywa
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
-	"net/http"
 )
-
-type Client struct {
-	endpoint   string
-	httpClient *http.Client
-	headers    map[string]string
-}
-
-func NewClient(endpoint string, headers map[string]string) *Client {
-	return &Client{
-		endpoint:   endpoint,
-		httpClient: http.DefaultClient,
-		headers:    headers,
-	}
-}
-
-func (c *Client) do(q string) (*bytes.Buffer, error) {
-	reqObj := graphqlRequest{
-		Query: q,
-	}
-
-	var reqBytes bytes.Buffer
-	err := json.NewEncoder(&reqBytes).Encode(&reqObj)
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequest(http.MethodPost, c.endpoint, &reqBytes)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Content-Type", "application/json")
-	for key, value := range c.headers {
-		req.Header.Add(key, value)
-	}
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var respBytes bytes.Buffer
-	_, err = io.Copy(&respBytes, resp.Body)
-	return &respBytes, err
-}
 
 type graphqlRequest struct {
 	Query     string                 `json:"query"`
@@ -235,10 +191,18 @@ func (sq GetQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
 	}
 
 	respObj := graphqlResponse{}
-
 	err = json.NewDecoder(respBytes).Decode(&respObj)
 	if err != nil {
 		return nil, err
 	}
+
+	if len(respObj.Errors) > 0 {
+		gqlErrs := make([]error, 0, len(respObj.Errors))
+		for _, e := range respObj.Errors {
+			gqlErrs = append(gqlErrs, errors.New(e.Message))
+		}
+		return nil, errors.Join(gqlErrs...)
+	}
+
 	return respObj.Data[sq.sq.ModelName], nil
 }
