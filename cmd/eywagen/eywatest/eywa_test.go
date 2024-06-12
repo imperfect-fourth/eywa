@@ -42,7 +42,7 @@ func TestUpdateQuery(t *testing.T) {
 		eywa.Eq[testTable](testTable_IDField(3)),
 	).Set(
 		testTable_NameField("updatetest"),
-		testTable_JsonBColField(jsonbcol{
+		testTable_JsonBColVar(jsonbcol{
 			StrField:  "abcd",
 			IntField:  2,
 			BoolField: false,

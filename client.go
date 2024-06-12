@@ -40,9 +40,10 @@ func NewClient(gqlEndpoint string, opt *ClientOpts) *Client {
 	return c
 }
 
-func (c *Client) do(q string) (*bytes.Buffer, error) {
+func (c *Client) do(q Queryable) (*bytes.Buffer, error) {
 	reqObj := graphqlRequest{
-		Query: q,
+		Query:     q.Query(),
+		Variables: q.Variables(),
 	}
 
 	var reqBytes bytes.Buffer
