@@ -55,7 +55,7 @@ type UpdateQuery[M Model, FN FieldName[M], F Field[M]] struct {
 	fields []FN
 }
 
-func (uq *UpdateQuery[M, FN, F]) marshalGQL() string {
+func (uq UpdateQuery[M, FN, F]) marshalGQL() string {
 	return fmt.Sprintf(
 		"%s {\nreturning {\n%s\n}\n}",
 		uq.uq.marshalGQL(),
@@ -63,7 +63,7 @@ func (uq *UpdateQuery[M, FN, F]) marshalGQL() string {
 	)
 }
 
-func (uq *UpdateQuery[M, FN, F]) Query() string {
+func (uq UpdateQuery[M, FN, F]) Query() string {
 	return fmt.Sprintf(
 		"mutation update_%s%s {\n%s\n}",
 		uq.uq.ModelName,
@@ -80,7 +80,7 @@ func (uq UpdateQuery[M, FN, F]) Variables() map[string]interface{} {
 	return vars
 }
 
-func (uq *UpdateQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
+func (uq UpdateQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
 	respBytes, err := client.do(uq)
 	if err != nil {
 		return nil, err
