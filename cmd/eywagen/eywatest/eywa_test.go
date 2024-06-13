@@ -53,7 +53,7 @@ func TestUpdateQuery(t *testing.T) {
 		testTable_ID,
 	)
 
-	expected := `mutation update_test_table($testTable_JsonBCol: jsonb!) {
+	expected := `mutation update_test_table($testTable_JsonBCol: jsonb) {
 update_test_table(where: {id: {_eq: 3}}, _set: {name: "updatetest", jsonb_col: $testTable_JsonBCol}) {
 returning {
 id
