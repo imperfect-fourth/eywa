@@ -17,6 +17,9 @@ func (v queryVar) marshalGQL() string {
 type queryVarArr []queryVar
 
 func (vs queryVarArr) marshalGQL() string {
+	if len(queryVarArr) == 0 {
+		return ""
+	}
 	buf := bytes.NewBufferString("(")
 	for i, v := range vs {
 		if i > 0 {
