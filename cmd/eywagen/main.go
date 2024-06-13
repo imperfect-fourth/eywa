@@ -35,6 +35,23 @@ func %sField(val %s) eywa.ModelField[%s] {
 	}
 }
 `
+	modelScalarVarFunc = `
+func %sVar(val %s) eywa.ModelField[%s] {
+	return eywa.ModelField[%s]{
+		Name: "%s",
+		Value: eywa.QueryVar("%s", %s[%s](val)),
+	}
+}
+`
+	modelVarFunc = `
+func %sVar[T interface{%s;eywa.TypedValue}](val %s) eywa.ModelField[%s] {
+	return eywa.ModelField[%s]{
+		Name: "%s",
+		Value: eywa.QueryVar("%s", T{val}),
+	}
+}
+`
+
 	modelRelationshipNameFunc = `
 func %s(subField eywa.ModelFieldName[%s], subFields ...eywa.ModelFieldName[%s]) string {
 	buf := bytes.NewBuffer([]byte("%s {"))
@@ -143,8 +160,9 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) {
 		if fieldTypeNameFull[0] == '*' {
 			fieldTypeName = fieldTypeNameFull[1:]
 		}
+		fieldScalarGqlType := gqlType(fieldType.Underlying().String())
 
-		// *struct -> struct, *[] -> []
+		// *struct -> struct, *[] -> [], *int -> int, etc
 		if ptr, ok := fieldType.(*types.Pointer); ok {
 			fieldType = ptr.Elem()
 		}
@@ -154,10 +172,13 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) {
 		} else if array, ok := fieldType.(*types.Array); ok {
 			fieldType = array.Elem()
 		}
-
 		// struct -> *struct
+		var fieldGqlType string
 		if _, ok := fieldType.Underlying().(*types.Struct); ok {
 			fieldType = types.NewPointer(fieldType)
+			fieldGqlType = "eywa.JSONValue | eywa.JSONBValue"
+		} else if _, ok := fieldType.Underlying().(*types.Map); ok {
+			fieldGqlType = "eywa.JSONValue | eywa.JSONBValue"
 		}
 
 		switch fieldType := fieldType.(type) {
@@ -187,6 +208,30 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) {
 					typeName,
 					fieldName,
 				))
+				if fieldScalarGqlType != "" {
+					contents.content.WriteString(fmt.Sprintf(
+						modelScalarVarFunc,
+						fmt.Sprintf("%s_%s", typeName, field.Name()),
+						fieldTypeNameFull,
+						typeName,
+						typeName,
+						fieldName,
+						fmt.Sprintf("%s_%s", typeName, field.Name()),
+						fmt.Sprintf("eywa.%s", fieldScalarGqlType),
+						fieldTypeNameFull,
+					))
+				} else if fieldGqlType != "" {
+					contents.content.WriteString(fmt.Sprintf(
+						modelVarFunc,
+						fmt.Sprintf("%s_%s", typeName, field.Name()),
+						fieldGqlType,
+						fieldTypeNameFull,
+						typeName,
+						typeName,
+						fieldName,
+						fmt.Sprintf("%s_%s", typeName, field.Name()),
+					))
+				}
 			}
 		default:
 			contents.content.WriteString(fmt.Sprintf(
@@ -203,6 +248,30 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) {
 				typeName,
 				fieldName,
 			))
+			if fieldScalarGqlType != "" {
+				contents.content.WriteString(fmt.Sprintf(
+					modelScalarVarFunc,
+					fmt.Sprintf("%s_%s", typeName, field.Name()),
+					fieldTypeNameFull,
+					typeName,
+					typeName,
+					fieldName,
+					fmt.Sprintf("%s_%s", typeName, field.Name()),
+					fmt.Sprintf("eywa.%sVar", fieldScalarGqlType),
+					fieldTypeNameFull,
+				))
+			} else if fieldGqlType != "" {
+				contents.content.WriteString(fmt.Sprintf(
+					modelVarFunc,
+					fmt.Sprintf("%s_%s", typeName, field.Name()),
+					fieldGqlType,
+					fieldTypeNameFull,
+					typeName,
+					typeName,
+					fieldName,
+					fmt.Sprintf("%s_%s", typeName, field.Name()),
+				))
+			}
 		}
 	}
 	for _, t := range recurseParse {
@@ -251,4 +320,24 @@ func parseFieldTypeName(name, rootPkgPath string) (sourcePkgPath, typeName strin
 		return "", fmt.Sprintf("%s%s", matches[1], matches[4])
 	}
 	return matches[2], fmt.Sprintf("%s%s.%s", matches[1], matches[3], matches[4])
+}
+
+var gqlTypes = map[string]string{
+	"bool":    "Boolean",
+	"*bool":   "NullableBoolean",
+	"int":     "Int",
+	"*int":    "NullableInt",
+	"float":   "Float",
+	"*float":  "NullableFloat",
+	"string":  "String",
+	"*string": "NullableString",
+}
+
+func gqlType(fieldType string) string {
+	for k, v := range gqlTypes {
+		if strings.HasPrefix(fieldType, k) {
+			return v
+		}
+	}
+	return ""
 }

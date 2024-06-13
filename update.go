@@ -20,6 +20,11 @@ type UpdateQueryBuilder[M Model, FN FieldName[M], F Field[M]] struct {
 
 func (uq UpdateQueryBuilder[M, FN, F]) Set(fields ...F) UpdateQueryBuilder[M, FN, F] {
 	uq.set = &set[M, F]{fieldArr[M, F](fields)}
+	for _, f := range fields {
+		if var_, ok := f.GetRawValue().(queryVar); ok {
+			uq.queryVars = append(uq.queryVars, var_)
+		}
+	}
 	return uq
 }
 
@@ -60,14 +65,23 @@ func (uq *UpdateQuery[M, FN, F]) marshalGQL() string {
 
 func (uq *UpdateQuery[M, FN, F]) Query() string {
 	return fmt.Sprintf(
-		"mutation update_%s {\n%s\n}",
+		"mutation update_%s%s {\n%s\n}",
 		uq.uq.ModelName,
+		uq.uq.queryVars.marshalGQL(),
 		uq.marshalGQL(),
 	)
 }
 
+func (uq UpdateQuery[M, FN, F]) Variables() map[string]interface{} {
+	vars := map[string]interface{}{}
+	for _, var_ := range uq.uq.queryVars {
+		vars[var_.name] = var_.value.Value()
+	}
+	return vars
+}
+
 func (uq *UpdateQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
-	respBytes, err := client.do(uq.Query())
+	respBytes, err := client.do(uq)
 	if err != nil {
 		return nil, err
 	}

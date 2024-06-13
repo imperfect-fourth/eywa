@@ -53,7 +53,7 @@ func (f RawField) GetName() string {
 	return f.Name
 }
 func (f RawField) GetValue() string {
-	if val, ok := f.Value.(gqlMarshaller); ok {
+	if val, ok := f.Value.(gqlMarshaler); ok {
 		return val.marshalGQL()
 	}
 	val, _ := json.Marshal(f.Value)
@@ -65,6 +65,9 @@ func (f RawField) GetValue() string {
 		val, _ = json.Marshal(string(val))
 	}
 	return string(val)
+}
+func (f RawField) GetRawValue() interface{} {
+	return f.Value
 }
 
 type ModelField[M Model] struct {
@@ -76,7 +79,11 @@ func (f ModelField[M]) GetName() string {
 	return f.Name
 }
 func (f ModelField[M]) GetValue() string {
-	if val, ok := f.Value.(gqlMarshaller); ok {
+	if var_, ok := f.Value.(queryVar); ok {
+		return fmt.Sprintf("$%s", var_.name)
+	}
+
+	if val, ok := f.Value.(gqlMarshaler); ok {
 		return val.marshalGQL()
 	}
 
@@ -90,11 +97,15 @@ func (f ModelField[M]) GetValue() string {
 	}
 	return string(val)
 }
+func (f ModelField[M]) GetRawValue() interface{} {
+	return f.Value
+}
 
 type Field[M Model] interface {
 	RawField | ModelField[M]
 	GetName() string
 	GetValue() string
+	GetRawValue() interface{}
 }
 
 type fieldArr[M Model, F Field[M]] []F
@@ -118,10 +129,12 @@ func (fs fieldArr[M, MF]) marshalGQL() string {
 
 type Queryable interface {
 	Query() string
+	Variables() map[string]interface{}
 }
 
 type QuerySkeleton[M Model, FN FieldName[M], F Field[M]] struct {
 	ModelName string
+	queryVars queryVarArr
 	// fields    ModelFieldArr[M, FN, F]
 	queryArgs[M, FN, F]
 }
@@ -195,8 +208,12 @@ func (sq GetQuery[M, FN, F]) Query() string {
 	)
 }
 
+func (sq GetQuery[M, FN, F]) Variables() map[string]interface{} {
+	return nil
+}
+
 func (sq GetQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
-	respBytes, err := client.do(sq.Query())
+	respBytes, err := client.do(sq)
 	if err != nil {
 		return nil, err
 	}
