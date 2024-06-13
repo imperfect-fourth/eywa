@@ -79,6 +79,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	//	fmt.Println(getTypedValueInterface())
 
 	header := bytes.NewBufferString(genHeader)
 	header.WriteString(pkg.Name())
@@ -183,7 +184,8 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) {
 
 		switch fieldType := fieldType.(type) {
 		case *types.Pointer:
-			if types.NewMethodSet(fieldType).Lookup(pkg, "ModelName") != nil {
+			if s := types.NewMethodSet(fieldType).Lookup(pkg, "ModelName"); s != nil {
+				fmt.Println(s)
 				contents.importsMap["bytes"] = true
 				contents.content.WriteString(fmt.Sprintf(
 					modelRelationshipNameFunc,
@@ -341,3 +343,22 @@ func gqlType(fieldType string) string {
 	}
 	return ""
 }
+
+//func getTypedValueInterface() *types.Interface {
+//	cfg := &packages.Config{Mode: packages.NeedName | packages.NeedTypes | packages.NeedTypesInfo, Tests: true}
+//	file, err := cfg.ParseFile(cfg.FileSet, "interface.go", []byte(typeValueInterfacePkg))
+//	if err != nil {
+//		panic(err)
+//	}
+//	intfObj := pkg.Scope().Lookup("TypedValue")
+//	if intfObj == nil {
+//		return nil
+//	}
+//	return intfObj.Type().Underlying().(*types.Interface)
+//}
+//
+//const typedValueInterfacePkg string = `package typedvalue
+//type TypedValue interface {
+//	Type() string
+//	Value() interface{}
+//}`

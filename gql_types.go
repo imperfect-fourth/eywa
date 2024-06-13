@@ -82,7 +82,7 @@ type JSONValue struct {
 }
 
 func (jv JSONValue) Type() string {
-	return "json!"
+	return "json"
 }
 func (jv JSONValue) Value() interface{} {
 	return jv.Val
@@ -93,7 +93,7 @@ type JSONBValue struct {
 }
 
 func (jv JSONBValue) Type() string {
-	return "jsonb!"
+	return "jsonb"
 }
 func (jv JSONBValue) Value() interface{} {
 	return jv.Val
