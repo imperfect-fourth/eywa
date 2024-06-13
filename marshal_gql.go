@@ -1,6 +1,6 @@
 package eywa
 
-type gqlMarshaller interface {
+type gqlMarshaler interface {
 	marshalGQL() string
 }
 
@@ -11,6 +11,6 @@ func (he HasuraEnum) marshalGQL() string {
 	return string(he)
 }
 
-func x(q gqlMarshaller) string {
+func x(q gqlMarshaler) string {
 	return "abcd"
 }

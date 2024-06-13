@@ -42,7 +42,7 @@ func TestUpdateQuery(t *testing.T) {
 		eywa.Eq[testTable](testTable_IDField(3)),
 	).Set(
 		testTable_NameField("updatetest"),
-		testTable_JsonBColField(jsonbcol{
+		testTable_JsonBColVar[eywa.JSONBValue](jsonbcol{
 			StrField:  "abcd",
 			IntField:  2,
 			BoolField: false,
@@ -53,15 +53,23 @@ func TestUpdateQuery(t *testing.T) {
 		testTable_ID,
 	)
 
-	expected := `mutation update_test_table {
-update_test_table(where: {id: {_eq: 3}}, _set: {name: "updatetest", jsonb_col: "{\"str_field\":\"abcd\",\"int_field\":2,\"bool_field\":false,\"arr_field\":[1,2,3]}"}) {
+	expected := `mutation update_test_table($testTable_JsonBCol: jsonb) {
+update_test_table(where: {id: {_eq: 3}}, _set: {name: "updatetest", jsonb_col: $testTable_JsonBCol}) {
 returning {
 id
 name
 }
 }
 }`
-	if assert.Equal(t, expected, q.Query()) {
+	expectedVars := map[string]interface{}{
+		"testTable_JsonBCol": jsonbcol{
+			StrField:  "abcd",
+			IntField:  2,
+			BoolField: false,
+			ArrField:  []int{1, 2, 3},
+		},
+	}
+	if assert.Equal(t, expected, q.Query()) && assert.Equal(t, expectedVars, q.Variables()) {
 		accessKey := os.Getenv("TEST_HGE_ACCESS_KEY")
 		c := eywa.NewClient("https://aware-cowbird-80.hasura.app/v1/graphql", &eywa.ClientOpts{
 			Headers: map[string]string{
