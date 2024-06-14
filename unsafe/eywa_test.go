@@ -29,15 +29,15 @@ type jsonbcol struct {
 }
 
 func TestSelectQuery(t *testing.T) {
-	q := Get[testTable]().Limit(2).Offset(1).DistinctOn("age").Where(
+	q := Get[testTable]().Limit(2).Offset(1).DistinctOn("name").OrderBy(eywa.Desc[testTable]("name")).Where(
 		eywa.Or(
-			eywa.Eq[testTable](eywa.RawField{"name", "abc"}),
-			eywa.Eq[testTable](eywa.RawField{"age", 12}),
+			eywa.Eq[testTable](eywa.RawField{"name", "abcd"}),
+			eywa.Eq[testTable](eywa.RawField{"age", 10}),
 		),
 	).Select("name")
 
 	expected := `query get_test_table {
-test_table(limit: 2, offset: 1, distinct_on: age, where: {_or: [{name: {_eq: "abc"}}, {age: {_eq: 12}}]}) {
+test_table(limit: 2, offset: 1, distinct_on: name, where: {_or: [{name: {_eq: "abcd"}}, {age: {_eq: 10}}]}, order_by: {name: desc}) {
 name
 }
 }`
@@ -52,7 +52,7 @@ name
 		resp, err := q.Exec(c)
 
 		assert.NoError(t, err)
-		assert.Equal(t, []testTable{{Name: "a"}}, resp)
+		assert.Equal(t, []testTable{{Name: "abcd"}, {Name: "abc"}}, resp)
 	}
 }
 
