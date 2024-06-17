@@ -14,7 +14,8 @@ import (
 )
 
 var (
-	typeNames = flag.String("types", "", "comma-separated list of type names; must be set")
+	typeNames  = flag.String("types", "", "comma-separated list of type names; must be set")
+	outputFile = flag.String("output-file", "eywa_generated.go", "output file path for generated file.")
 )
 
 func usage() {
@@ -102,7 +103,7 @@ func main() {
 		}
 		contents.imports.WriteString(")\n\n")
 	}
-	if err := writeToFile("eywa_fields.go", contents); err != nil {
+	if err := writeToFile(*outputFile, contents); err != nil {
 		fmt.Fprint(os.Stderr, err.Error())
 		os.Exit(1)
 	}
