@@ -171,6 +171,12 @@ func (sq GetQueryBuilder[M, FN, F]) Limit(n int) GetQueryBuilder[M, FN, F] {
 	return sq
 }
 
+func (sq GetQueryBuilder[M, FN, F]) OrderBy(o ...OrderByExpr) GetQueryBuilder[M, FN, F] {
+	orderByArr := orderBy(o)
+	sq.orderBy = &orderByArr
+	return sq
+}
+
 func (sq GetQueryBuilder[M, FN, F]) Where(w *WhereExpr) GetQueryBuilder[M, FN, F] {
 	sq.where = &where{w}
 	return sq

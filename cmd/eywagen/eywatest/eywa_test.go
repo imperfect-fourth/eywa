@@ -9,16 +9,18 @@ import (
 )
 
 func TestSelectQuery(t *testing.T) {
-	age := 12
-	q := eywa.Get[testTable]().Limit(2).Offset(1).DistinctOn(testTable_Age).Where(
+	age := 10
+	q := eywa.Get[testTable]().Limit(2).Offset(1).DistinctOn(testTable_Name).OrderBy(
+		eywa.Desc[testTable](testTable_Name),
+	).Where(
 		eywa.Or(
-			eywa.Eq[testTable](testTable_NameField("abc")),
+			eywa.Eq[testTable](testTable_NameField("abcd")),
 			eywa.Eq[testTable](testTable_AgeField(&age)),
 		),
 	).Select(testTable_Name)
 
 	expected := `query get_test_table {
-test_table(limit: 2, offset: 1, distinct_on: age, where: {_or: [{name: {_eq: "abc"}}, {age: {_eq: 12}}]}) {
+test_table(limit: 2, offset: 1, distinct_on: name, where: {_or: [{name: {_eq: "abcd"}}, {age: {_eq: 10}}]}, order_by: {name: desc}) {
 name
 }
 }`
@@ -33,7 +35,7 @@ name
 		resp, err := q.Exec(c)
 
 		assert.NoError(t, err)
-		assert.Equal(t, []testTable{{Name: "a"}}, resp)
+		assert.Equal(t, []testTable{{Name: "abcd"}, {Name: "abc"}}, resp)
 	}
 }
 

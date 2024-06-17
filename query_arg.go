@@ -11,6 +11,7 @@ type queryArgs[M Model, FN FieldName[M], F Field[M]] struct {
 	offset     *offset
 	distinctOn *distinctOn[M, FN]
 	where      *where
+	orderBy    *orderBy
 	set        *set[M, F]
 }
 
@@ -20,6 +21,7 @@ func (qa queryArgs[M, FN, F]) marshalGQL() string {
 	args = appendArg(args, qa.offset)
 	args = appendArg(args, qa.distinctOn)
 	args = appendArg(args, qa.where)
+	args = appendArg(args, qa.orderBy)
 	args = appendArg(args, qa.set)
 
 	return fmt.Sprintf("(%s)", strings.Join(args, ", "))
@@ -203,4 +205,52 @@ func (w *WhereExpr) marshalGQL() string {
 	}
 	expr := fmt.Sprintf("{%s}", strings.Join(stringArr, ", "))
 	return expr
+}
+
+type OrderByExpr struct {
+	order string
+	field string
+}
+
+func (ob OrderByExpr) marshalGQL() string {
+	return fmt.Sprintf("%s: %s", ob.field, ob.order)
+}
+
+func Asc[M Model, FN FieldName[M]](field FN) OrderByExpr {
+	return OrderByExpr{"asc", string(field)}
+}
+func AscNullsFirsst[M Model, FN FieldName[M]](field FN) OrderByExpr {
+	return OrderByExpr{"asc_nulls_first", string(field)}
+}
+func AscNullsLast[M Model, FN FieldName[M]](field FN) OrderByExpr {
+	return OrderByExpr{"asc_nulls_last", string(field)}
+}
+func Desc[M Model, FN FieldName[M]](field FN) OrderByExpr {
+	return OrderByExpr{"desc", string(field)}
+}
+func DescNullsFirst[M Model, FN FieldName[M]](field FN) OrderByExpr {
+	return OrderByExpr{"desc_nulls_first", string(field)}
+}
+func DescNullsLast[M Model, FN FieldName[M]](field FN) OrderByExpr {
+	return OrderByExpr{"desc_nulls_last", string(field)}
+}
+
+type orderBy []OrderByExpr
+
+func (oba orderBy) queryArgName() string {
+	return "order_by"
+}
+
+func (oba orderBy) marshalGQL() string {
+	if len(oba) == 0 {
+		return ""
+	}
+	stringArr := make([]string, 0, len(oba))
+	for _, ob := range oba {
+		expr := ob.marshalGQL()
+		if expr != "" {
+			stringArr = append(stringArr, expr)
+		}
+	}
+	return fmt.Sprintf("%s: {%s}", oba.queryArgName(), strings.Join(stringArr, ", "))
 }
