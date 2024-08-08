@@ -81,7 +81,7 @@ func (uq UpdateQuery[M, FN, F]) Variables() map[string]interface{} {
 }
 
 func (uq UpdateQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
-	respBytes, err := client.do(uq)
+	respBytes, err := client.Do(uq)
 	if err != nil {
 		return nil, err
 	}

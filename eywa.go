@@ -219,7 +219,7 @@ func (sq GetQuery[M, FN, F]) Variables() map[string]interface{} {
 }
 
 func (sq GetQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
-	respBytes, err := client.do(sq)
+	respBytes, err := client.Do(sq)
 	if err != nil {
 		return nil, err
 	}
