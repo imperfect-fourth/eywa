@@ -9,7 +9,7 @@ type testTable struct {
 	ID         int         `json:"id,omitempty"`
 	iD         int32       `json:"idd,omitempty"`
 	custom     *customType `json:"custom"`
-	testTable2 *testTable2 `json:"testTable2"`
+	testTable2 *testTable2 `json:"test_table2"`
 	JsonBCol   jsonbcol    `json:"jsonb_col"`
 	RR         R           `json:"r"`
 }

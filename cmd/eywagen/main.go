@@ -54,14 +54,13 @@ func %sVar[T interface{%s;eywa.TypedValue}](val %s) eywa.ModelField[%s] {
 
 	modelRelationshipNameFunc = `
 func %s(subField eywa.ModelFieldName[%s], subFields ...eywa.ModelFieldName[%s]) eywa.ModelFieldName[%s] {
-	buf := bytes.NewBuffer([]byte((new(%s)).ModelName()))
-	buf.WriteString(" {")
+	buf := bytes.NewBuffer([]byte("%s {\n"))
 	buf.WriteString(string(subField))
 	for _, f := range subFields {
 		buf.WriteString("\n")
 		buf.WriteString(string(f))
 	}
-	buf.WriteString("}")
+	buf.WriteString("\n}")
 	return eywa.ModelFieldName[%s](buf.String())
 }
 `
