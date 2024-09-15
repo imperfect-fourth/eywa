@@ -29,7 +29,6 @@ func (vs queryVarArr) MarshalGQL() string {
 	}
 	buf.WriteString(")")
 	return buf.String()
-
 }
 
 func QueryVar(name string, value TypedValue) queryVar {

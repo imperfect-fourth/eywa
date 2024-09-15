@@ -1,33 +1,33 @@
 package eywa
 
-//type Type interface {
-//	Type() string
-//}
+// type Type interface {
+// 	Type() string
+// }
 //
-//type Boolean interface {
-//	~bool
-//}
-//type NullableBoolean interface {
-//	~*bool
-//}
-//type Int interface {
-//	~int
-//}
-//type NullableInt interface {
-//	~*int
-//}
-//type Float interface {
-//	~float32 | ~float64
-//}
-//type NullableFloat interface {
-//	~*float32 | ~*float64
-//}
-//type String interface {
-//	~string
-//}
-//type NullableBoolean interface {
-//	~*string
-//}
+// type Boolean interface {
+// 	~bool
+// }
+// type NullableBoolean interface {
+// 	~*bool
+// }
+// type Int interface {
+// 	~int
+// }
+// type NullableInt interface {
+// 	~*int
+// }
+// type Float interface {
+// 	~float32 | ~float64
+// }
+// type NullableFloat interface {
+// 	~*float32 | ~*float64
+// }
+// type String interface {
+// 	~string
+// }
+// type NullableBoolean interface {
+// 	~*string
+// }
 
 type TypedValue interface {
 	Type() string

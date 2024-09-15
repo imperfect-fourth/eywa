@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"go/types"
 	"os"
-	"regexp"
 	re "regexp"
 	"strings"
 
@@ -282,7 +281,6 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) {
 	for _, t := range recurseParse {
 		parseType(t, pkg, contents)
 	}
-
 }
 
 func writeToFile(filename string, contents *fileContent) error {
@@ -316,8 +314,8 @@ func loadPackage() (*types.Package, error) {
 }
 
 func parseFieldTypeName(name, rootPkgPath string) (sourcePkgPath, typeName string) {
-	re, _ := regexp.Compile(`^(\*)?(.*/(.*))\.(.*)$`)
-	matches := re.FindStringSubmatch(name)
+	rgx := re.MustCompile(`^(\*)?(.*/(.*))\.(.*)$`)
+	matches := rgx.FindStringSubmatch(name)
 	if len(matches) == 0 {
 		return "", name
 	}
