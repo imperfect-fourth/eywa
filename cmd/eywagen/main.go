@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"go/types"
 	"os"
-	"regexp"
 	re "regexp"
 	"strings"
 
@@ -54,15 +53,16 @@ func %sVar[T interface{%s;eywa.TypedValue}](val %s) eywa.ModelField[%s] {
 `
 
 	modelRelationshipNameFunc = `
-func %s(subField eywa.ModelFieldName[%s], subFields ...eywa.ModelFieldName[%s]) string {
-	buf := bytes.NewBuffer([]byte("%s {"))
+func %s(subField eywa.ModelFieldName[%s], subFields ...eywa.ModelFieldName[%s]) eywa.ModelFieldName[%s] {
+	buf := bytes.NewBuffer([]byte((new(%s)).ModelName()))
+	buf.WriteString(" {")
 	buf.WriteString(string(subField))
 	for _, f := range subFields {
 		buf.WriteString("\n")
 		buf.WriteString(string(f))
 	}
 	buf.WriteString("}")
-	return buf.String()
+	return eywa.ModelFieldName[%s](buf.String())
 }
 `
 )
@@ -192,7 +192,9 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) {
 					fmt.Sprintf("%s_%s", typeName, field.Name()),
 					fieldTypeName,
 					fieldTypeName,
+					typeName,
 					fieldName,
+					typeName,
 				))
 				recurseParse = append(recurseParse, fieldTypeName)
 			} else {
@@ -279,7 +281,6 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) {
 	for _, t := range recurseParse {
 		parseType(t, pkg, contents)
 	}
-
 }
 
 func writeToFile(filename string, contents *fileContent) error {
@@ -313,8 +314,8 @@ func loadPackage() (*types.Package, error) {
 }
 
 func parseFieldTypeName(name, rootPkgPath string) (sourcePkgPath, typeName string) {
-	re, _ := regexp.Compile(`^(\*)?(.*/(.*))\.(.*)$`)
-	matches := re.FindStringSubmatch(name)
+	rgx := re.MustCompile(`^(\*)?(.*/(.*))\.(.*)$`)
+	matches := rgx.FindStringSubmatch(name)
 	if len(matches) == 0 {
 		return "", name
 	}

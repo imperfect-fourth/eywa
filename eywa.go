@@ -116,16 +116,16 @@ func (fs fieldArr[M, MF]) MarshalGQL() string {
 		if i > 0 {
 			buf.WriteString(", ")
 		}
-		buf.WriteString(string(f.GetName()))
+		buf.WriteString(f.GetName())
 		buf.WriteString(": ")
 		buf.WriteString(f.GetValue())
 	}
 	return buf.String()
 }
 
-//func RawField[M Model](s string, v interface{}) Field[M] {
-//	return Field[M]{s, v}
-//}
+// func RawField[M Model](s string, v interface{}) Field[M] {
+//	 return Field[M]{s, v}
+// }
 
 type Queryable interface {
 	Query() string

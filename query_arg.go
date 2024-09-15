@@ -91,7 +91,7 @@ func (s set[M, F]) queryArgName() string {
 	return "_set"
 }
 func (s set[M, F]) MarshalGQL() string {
-	if s.fieldArr == nil || len(s.fieldArr) == 0 {
+	if len(s.fieldArr) == 0 {
 		return ""
 	}
 	return fmt.Sprintf("%s: {%s}", s.queryArgName(), s.fieldArr.MarshalGQL())

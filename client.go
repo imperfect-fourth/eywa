@@ -15,7 +15,7 @@ type Client struct {
 }
 
 type ClientOpts struct {
-	HttpClient *http.Client
+	HTTPClient *http.Client
 	Headers    map[string]string
 }
 
@@ -28,11 +28,11 @@ func NewClient(gqlEndpoint string, opt *ClientOpts) *Client {
 	}
 
 	if opt != nil {
-		if opt.HttpClient != nil {
-			c.httpClient = opt.HttpClient
+		if opt.HTTPClient != nil {
+			c.httpClient = opt.HTTPClient
 		}
 
-		if opt.Headers != nil && len(opt.Headers) > 0 {
+		if len(opt.Headers) > 0 {
 			c.headers = opt.Headers
 		}
 	}
