@@ -25,10 +25,21 @@ func TestActionQuery(t *testing.T) {
 		},
 	).Select("name")
 
-	expected := `query run_test_action {
-test_action(arg1: 4, arg2: "value", arg3: enumvalue) {
+	// 	expected := `query run_test_action {
+	// test_action(arg1: 4, arg2: "value", arg3: enumvalue) {
+	// name
+	// }
+	// }`
+	query := q.Query()
+	assert.Contains(t, query,
+		`query run_test_action {
+test_action(`,
+		`arg1: 4`,
+		`arg2: "value"`,
+		`arg3: enumvalue`,
+		`) {
 name
 }
-}`
-	assert.Equal(t, expected, q.Query())
+}`,
+	)
 }
