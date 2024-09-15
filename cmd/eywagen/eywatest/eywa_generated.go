@@ -84,15 +84,16 @@ func testTable_customVar[T interface{eywa.JSONValue | eywa.JSONBValue;eywa.Typed
 	}
 }
 
-func testTable_testTable2(subField eywa.ModelFieldName[testTable2], subFields ...eywa.ModelFieldName[testTable2]) string {
-	buf := bytes.NewBuffer([]byte("testTable2 {"))
+func testTable_testTable2(subField eywa.ModelFieldName[testTable2], subFields ...eywa.ModelFieldName[testTable2]) eywa.ModelFieldName[testTable] {
+	buf := bytes.NewBuffer([]byte((new(testTable2)).ModelName()))
+	buf.WriteString(" {")
 	buf.WriteString(string(subField))
 	for _, f := range subFields {
 		buf.WriteString("\n")
 		buf.WriteString(string(f))
 	}
 	buf.WriteString("}")
-	return buf.String()
+	return eywa.ModelFieldName[testTable](buf.String())
 }
 const testTable_JsonBCol eywa.ModelFieldName[testTable] = "jsonb_col"
 

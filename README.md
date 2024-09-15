@@ -73,17 +73,17 @@ resp, err := GetUnsafe[User]().Where(
 ).Limit(5).Select("id", "age").Exec(client)
 ```
 
-## `fieldgen` and death to raw string literals
+## `eywagen` and death to raw string literals
 In the examples above, you may have noticed that the `Select` method takes raw 
 strings as field names. This is prone to typos. `eywa` has a codegen tool for 
 generating constants and functions for selecting fields.  
-Install fieldgen
+Install eywagen
 ```bash
-go install github.com/imperfect-fourth/eywa/cmd/fieldgen
+go install github.com/imperfect-fourth/eywa/cmd/eywagen
 ```
 Add `go:generate` comments to your code.
 ```go
-//go:generate fieldgen -types User -output user_fields.go
+//go:generate eywagen -types User -output user_fields.go
 type User struct {
     ...
 }
@@ -114,10 +114,10 @@ resp, err := Get[User]().Where(
 ).Exec(client)
 ```
 
-If a model has a relationship with another model, `fieldgen` will generate a
+If a model has a relationship with another model, `eywagen` will generate a
 function to select fields for that relationship. Eg.
 ```go
-//go:generate fieldgen -types User,Order -output model_fields.go
+//go:generate eywagen -types User,Order -output model_fields.go
 type User struct {
     ...
     Orders []Order `json:"orders"`
