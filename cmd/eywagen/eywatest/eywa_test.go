@@ -1,9 +1,11 @@
 package eywatest
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/imperfect-fourth/eywa"
 	"github.com/stretchr/testify/assert"
 )
@@ -123,5 +125,32 @@ name
 		assert.NoError(t, err)
 		n := 3
 		assert.Equal(t, []testTable{{ID: n, Name: "updatetest"}}, resp)
+	}
+}
+
+func TestInsertOneQuery(t *testing.T) {
+	id := uuid.New()
+	q := eywa.InsertOne(
+		testTable2_IDField(id),
+	).Select(
+		testTable2_ID,
+	)
+	expected := fmt.Sprintf(`mutation insert_test_table2_one {
+insert_test_table2_one(object: {id: "%s"}) {
+id
+}
+}`, id.String())
+
+	if assert.Equal(t, expected, q.Query()) {
+		accessKey := os.Getenv("TEST_HGE_ACCESS_KEY")
+		c := eywa.NewClient("https://aware-cowbird-80.hasura.app/v1/graphql", &eywa.ClientOpts{
+			Headers: map[string]string{
+				"x-hasura-access-key": accessKey,
+			},
+		})
+
+		resp, err := q.Exec(c)
+		assert.NoError(t, err)
+		assert.Equal(t, &testTable2{ID: id}, resp)
 	}
 }

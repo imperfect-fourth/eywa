@@ -13,6 +13,7 @@ type queryArgs[M Model, FN FieldName[M], F Field[M]] struct {
 	where      *where
 	orderBy    *orderBy
 	set        *set[M, F]
+	object     *object[M, F]
 }
 
 func (qa queryArgs[M, FN, F]) MarshalGQL() string {
@@ -23,6 +24,7 @@ func (qa queryArgs[M, FN, F]) MarshalGQL() string {
 	args = appendArg(args, qa.where)
 	args = appendArg(args, qa.orderBy)
 	args = appendArg(args, qa.set)
+	args = appendArg(args, qa.object)
 
 	return fmt.Sprintf("(%s)", strings.Join(args, ", "))
 }
@@ -253,4 +255,16 @@ func (oba orderBy) MarshalGQL() string {
 		}
 	}
 	return fmt.Sprintf("%s: {%s}", oba.queryArgName(), strings.Join(stringArr, ", "))
+}
+
+type object[M Model, F Field[M]] struct {
+	fields fieldArr[M, F]
+}
+
+func (o object[M, F]) queryArgName() string {
+	return "object"
+}
+
+func (o object[M, F]) MarshalGQL() string {
+	return fmt.Sprintf("%s: {%s}", o.queryArgName(), o.fields.MarshalGQL())
 }
