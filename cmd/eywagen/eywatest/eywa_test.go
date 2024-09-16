@@ -57,7 +57,9 @@ func TestRelationshipSelectQuery(t *testing.T) {
 
 	expected := `query get_test_table {
 test_table(limit: 2, offset: 1, distinct_on: name, where: {_or: [{name: {_eq: "abcd"}}, {age: {_eq: 10}}]}, order_by: {name: desc}) {
-test_table2 {id}
+test_table2 {
+id
+}
 name
 }
 }`
