@@ -91,7 +91,6 @@ func main() {
 		content:    bytes.NewBufferString(""),
 	}
 	for _, t := range types {
-		fmt.Printf("parsing type %+v", t)
 		parseType(t, pkg, contents)
 	}
 	if len(contents.importsMap) > 0 {
@@ -153,13 +152,7 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) {
 		fieldName := tagValue[0]
 		field := typeStruct.Field(i)
 		fieldType := field.Type()
-		fmt.Println("===========================\n")
-		fmt.Printf("%+v\n%+v\n", fieldName, field)
-		if _, ok := fieldType.(*types.Named); ok {
-			fmt.Printf("%+v\n", fieldType.(*types.Named).TypeParams())
-		}
 		importPackages, fieldTypeNameFull := parseFieldTypeName(field.Type().String(), pkg.Path())
-		fmt.Println(fieldTypeNameFull)
 		for _, p := range importPackages {
 			contents.importsMap[p] = true
 		}
@@ -328,11 +321,7 @@ func parseFieldTypeName(name, rootPkgPath string) (importPackages []string, type
 	matches := rgx.FindStringSubmatch(genericMatches[1])
 	// basic types: int, string, etc
 	if len(matches) == 0 {
-		fmt.Println("matching here")
 		return nil, name
-	}
-	for i, m := range matches {
-		fmt.Println(i, m)
 	}
 	importPackages = []string{}
 	pointer := matches[1]
@@ -341,14 +330,12 @@ func parseFieldTypeName(name, rootPkgPath string) (importPackages []string, type
 	typeName = matches[4]
 	// if type has generic type parameters
 	if genericMatches[2] != "" {
-		fmt.Println("found generics")
 		typeParams := strings.Split(genericMatches[3], ", ")
 		typeParamNames := []string{}
 		for _, tp := range typeParams {
 			tpImportPackages, tpTypeName := parseFieldTypeName(tp, rootPkgPath)
 			importPackages = append(importPackages, tpImportPackages...)
 			typeParamNames = append(typeParamNames, tpTypeName)
-			fmt.Println(typeParamNames)
 		}
 		typeName = fmt.Sprintf("%s[%s]", typeName, strings.Join(typeParamNames, ", "))
 	}
