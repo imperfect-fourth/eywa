@@ -313,7 +313,6 @@ func loadPackage() (*types.Package, error) {
 }
 
 func parseFieldTypeName(name, rootPkgPath string) (importPackages []string, typeName string) {
-	importPackages = []string{}
 	genericTypeRegex := re.MustCompile(`^(.*?)(\[(.*)\])?$`)
 	genericMatches := genericTypeRegex.FindStringSubmatch(name)
 
