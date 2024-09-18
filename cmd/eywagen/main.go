@@ -91,6 +91,7 @@ func main() {
 		content:    bytes.NewBufferString(""),
 	}
 	for _, t := range types {
+		fmt.Printf("parsing type %+v", t)
 		parseType(t, pkg, contents)
 	}
 	if len(contents.importsMap) > 0 {
@@ -152,9 +153,15 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) {
 		fieldName := tagValue[0]
 		field := typeStruct.Field(i)
 		fieldType := field.Type()
-		typeSourcePkgName, fieldTypeNameFull := parseFieldTypeName(field.Type().String(), pkg.Path())
-		if typeSourcePkgName != "" {
-			contents.importsMap[typeSourcePkgName] = true
+		fmt.Println("===========================\n")
+		fmt.Printf("%+v\n%+v\n", fieldName, field)
+		if _, ok := fieldType.(*types.Named); ok {
+			fmt.Printf("%+v\n", fieldType.(*types.Named).TypeParams())
+		}
+		importPackages, fieldTypeNameFull := parseFieldTypeName(field.Type().String(), pkg.Path())
+		fmt.Println(fieldTypeNameFull)
+		for _, p := range importPackages {
+			contents.importsMap[p] = true
 		}
 		fieldTypeName := fieldTypeNameFull
 		if fieldTypeNameFull[0] == '*' {
@@ -312,16 +319,45 @@ func loadPackage() (*types.Package, error) {
 	return pkgs[0].Types, nil
 }
 
-func parseFieldTypeName(name, rootPkgPath string) (sourcePkgPath, typeName string) {
+func parseFieldTypeName(name, rootPkgPath string) (importPackages []string, typeName string) {
+	importPackages = []string{}
+	genericTypeRegex := re.MustCompile(`^(.*?)(\[(.*)\])?$`)
+	genericMatches := genericTypeRegex.FindStringSubmatch(name)
+
 	rgx := re.MustCompile(`^(\*)?(.*/(.*))\.(.*)$`)
-	matches := rgx.FindStringSubmatch(name)
+	matches := rgx.FindStringSubmatch(genericMatches[1])
+	// basic types: int, string, etc
 	if len(matches) == 0 {
-		return "", name
+		fmt.Println("matching here")
+		return nil, name
 	}
-	if rootPkgPath == matches[2] {
-		return "", fmt.Sprintf("%s%s", matches[1], matches[4])
+	for i, m := range matches {
+		fmt.Println(i, m)
 	}
-	return matches[2], fmt.Sprintf("%s%s.%s", matches[1], matches[3], matches[4])
+	importPackages = []string{}
+	pointer := matches[1]
+	typePackagePath := matches[2]
+	typePackageName := matches[3]
+	typeName = matches[4]
+	// if type has generic type parameters
+	if genericMatches[2] != "" {
+		fmt.Println("found generics")
+		typeParams := strings.Split(genericMatches[3], ", ")
+		typeParamNames := []string{}
+		for _, tp := range typeParams {
+			tpImportPackages, tpTypeName := parseFieldTypeName(tp, rootPkgPath)
+			importPackages = append(importPackages, tpImportPackages...)
+			typeParamNames = append(typeParamNames, tpTypeName)
+			fmt.Println(typeParamNames)
+		}
+		typeName = fmt.Sprintf("%s[%s]", typeName, strings.Join(typeParamNames, ", "))
+	}
+	// if type's source pkg is not the same as root package, import
+	if rootPkgPath == typePackagePath {
+		return importPackages, fmt.Sprintf("%s%s", pointer, typeName)
+	}
+	importPackages = append(importPackages, matches[2])
+	return importPackages, fmt.Sprintf("%s%s.%s", pointer, typePackageName, typeName)
 }
 
 var gqlTypes = map[string]string{

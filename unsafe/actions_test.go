@@ -3,7 +3,6 @@ package unsafe
 import (
 	"testing"
 
-	"github.com/imperfect-fourth/eywa"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,7 +20,7 @@ func TestActionQuery(t *testing.T) {
 		map[string]interface{}{
 			"arg1": 4,
 			"arg2": "value",
-			"arg3": eywa.HasuraEnum("enumvalue"),
+			"arg3": state2,
 		},
 	).Select("name")
 
@@ -36,7 +35,7 @@ func TestActionQuery(t *testing.T) {
 test_action(`,
 		`arg1: 4`,
 		`arg2: "value"`,
-		`arg3: enumvalue`,
+		`arg3: state2`,
 		`) {
 name
 }

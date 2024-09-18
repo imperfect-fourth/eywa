@@ -1,18 +1,32 @@
 package eywatest
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"github.com/imperfect-fourth/eywa"
+)
 
 //go:generate ../eywagen -types testTable,testTable2
 type testTable struct {
-	Name       string      `json:"name"`
-	Age        *int        `json:"age"`
-	ID         int         `json:"id,omitempty"`
-	iD         int32       `json:"idd,omitempty"`
-	custom     *customType `json:"custom"`
-	testTable2 *testTable2 `json:"test_table2"`
-	JsonBCol   jsonbcol    `json:"jsonb_col"`
-	RR         R           `json:"r"`
+	Name       string                  `json:"name"`
+	Age        *int                    `json:"age"`
+	ID         int                     `json:"id,omitempty"`
+	iD         int32                   `json:"idd,omitempty"`
+	custom     *customType             `json:"custom"`
+	testTable2 *testTable2             `json:"test_table2"`
+	JsonBCol   jsonbcol                `json:"jsonb_col"`
+	RR         R                       `json:"r"`
+	Status     eywa.HasuraEnum[status] `json:"status"`
+	F          X[string, int]          `json:"f"`
 }
+
+type status string
+
+type X[T ~string, U ~int] string
+
+var (
+	state1 eywa.HasuraEnum[status] = "state1"
+	state2 eywa.HasuraEnum[status] = "state2"
+)
 
 type R string
 
