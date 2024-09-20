@@ -126,17 +126,17 @@ func testTable_RRVar(val R) eywa.ModelField[testTable] {
 }
 const testTable_Status eywa.ModelFieldName[testTable] = "status"
 
-func testTable_StatusField(val eywa.HasuraEnum[status]) eywa.ModelField[testTable] {
+func testTable_StatusField(val eywa.Enum[status]) eywa.ModelField[testTable] {
 	return eywa.ModelField[testTable]{
 		Name: "status",
 		Value: val,
 	}
 }
 
-func testTable_StatusVar(val eywa.HasuraEnum[status]) eywa.ModelField[testTable] {
+func testTable_StatusVar(val eywa.Enum[status]) eywa.ModelField[testTable] {
 	return eywa.ModelField[testTable]{
 		Name: "status",
-		Value: eywa.QueryVar("testTable_Status", eywa.StringVar[eywa.HasuraEnum[status]](val)),
+		Value: eywa.QueryVar("testTable_Status", eywa.StringVar[eywa.Enum[status]](val)),
 	}
 }
 const testTable_F eywa.ModelFieldName[testTable] = "f"

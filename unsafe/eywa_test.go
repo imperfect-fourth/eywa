@@ -13,15 +13,15 @@ type testTable struct {
 	Name     string                  `json:"name"`
 	Age      int                     `json:"age"`
 	ID       *int                    `json:"id,omitempty"`
-	State    eywa.HasuraEnum[status] `json:"state"`
+	State    eywa.Enum[status] `json:"state"`
 	JsonBCol jsonbcol                `json:"jsonb_col"`
 }
 
 type status string
 
 var (
-	state1 eywa.HasuraEnum[status] = "state1"
-	state2 eywa.HasuraEnum[status] = "state2"
+	state1 eywa.Enum[status] = "state1"
+	state2 eywa.Enum[status] = "state2"
 )
 
 func (t testTable) ModelName() string {

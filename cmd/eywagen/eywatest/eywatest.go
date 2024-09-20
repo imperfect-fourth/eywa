@@ -15,7 +15,7 @@ type testTable struct {
 	testTable2 *testTable2             `json:"test_table2"`
 	JsonBCol   jsonbcol                `json:"jsonb_col"`
 	RR         R                       `json:"r"`
-	Status     eywa.HasuraEnum[status] `json:"status"`
+	Status     eywa.Enum[status] `json:"status"`
 	F          X[string, int]          `json:"f"`
 }
 
@@ -24,8 +24,8 @@ type status string
 type X[T ~string, U ~int] string
 
 var (
-	state1 eywa.HasuraEnum[status] = "state1"
-	state2 eywa.HasuraEnum[status] = "state2"
+	state1 eywa.Enum[status] = "state1"
+	state2 eywa.Enum[status] = "state2"
 )
 
 type R string
