@@ -4,13 +4,8 @@ type GQLMarshaler interface {
 	MarshalGQL() string
 }
 
-type HasuraEnum string
+type Enum[T ~string] string
 
-func (he HasuraEnum) MarshalGQL() string {
-	_ = x(he)
-	return string(he)
-}
-
-func x(q GQLMarshaler) string {
-	return "abcd"
+func (e Enum[T]) MarshalGQL() string {
+	return string(e)
 }

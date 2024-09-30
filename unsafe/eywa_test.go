@@ -10,12 +10,19 @@ import (
 )
 
 type testTable struct {
-	Name     string          `json:"name"`
-	Age      int             `json:"age"`
-	ID       *int            `json:"id,omitempty"`
-	State    eywa.HasuraEnum `json:"state"`
-	JsonBCol jsonbcol        `json:"jsonb_col"`
+	Name     string                  `json:"name"`
+	Age      int                     `json:"age"`
+	ID       *int                    `json:"id,omitempty"`
+	State    eywa.Enum[status] `json:"state"`
+	JsonBCol jsonbcol                `json:"jsonb_col"`
 }
+
+type status string
+
+var (
+	state1 eywa.Enum[status] = "state1"
+	state2 eywa.Enum[status] = "state2"
+)
 
 func (t testTable) ModelName() string {
 	return "test_table"
@@ -61,7 +68,7 @@ func TestUpdateQuery(t *testing.T) {
 		eywa.Eq[testTable](eywa.RawField{"id", 3}),
 	).Set(
 		eywa.RawField{"name", "updatetest"},
-		eywa.RawField{"state", eywa.HasuraEnum("state1")},
+		eywa.RawField{"state", state1},
 		eywa.RawField{"jsonb_col", jsonbcol{
 			StrField:  "abcd",
 			IntField:  2,
