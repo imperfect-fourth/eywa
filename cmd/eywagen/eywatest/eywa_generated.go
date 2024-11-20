@@ -8,83 +8,83 @@ import (
 )
 
 
-const testTable_Name eywa.ModelFieldName[testTable] = "name"
+const testTable_Name eywa.FieldName[testTable] = "name"
 
-func testTable_NameField(val string) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_NameField(val string) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "name",
 		Value: val,
 	}
 }
 
-func testTable_NameVar(val string) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_NameVar(val string) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "name",
 		Value: eywa.QueryVar("testTable_Name", eywa.StringVar[string](val)),
 	}
 }
-const testTable_Age eywa.ModelFieldName[testTable] = "age"
+const testTable_Age eywa.FieldName[testTable] = "age"
 
-func testTable_AgeField(val *int) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_AgeField(val *int) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "age",
 		Value: val,
 	}
 }
 
-func testTable_AgeVar(val *int) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_AgeVar(val *int) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "age",
 		Value: eywa.QueryVar("testTable_Age", eywa.NullableIntVar[*int](val)),
 	}
 }
-const testTable_ID eywa.ModelFieldName[testTable] = "id"
+const testTable_ID eywa.FieldName[testTable] = "id"
 
-func testTable_IDField(val int) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_IDField(val int) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "id",
 		Value: val,
 	}
 }
 
-func testTable_IDVar(val int) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_IDVar(val int) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "id",
 		Value: eywa.QueryVar("testTable_ID", eywa.IntVar[int](val)),
 	}
 }
-const testTable_iD eywa.ModelFieldName[testTable] = "idd"
+const testTable_iD eywa.FieldName[testTable] = "idd"
 
-func testTable_iDField(val int32) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_iDField(val int32) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "idd",
 		Value: val,
 	}
 }
 
-func testTable_iDVar(val int32) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_iDVar(val int32) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "idd",
 		Value: eywa.QueryVar("testTable_iD", eywa.IntVar[int32](val)),
 	}
 }
-const testTable_custom eywa.ModelFieldName[testTable] = "custom"
+const testTable_custom eywa.FieldName[testTable] = "custom"
 
-func testTable_customField(val *customType) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_customField(val *customType) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "custom",
 		Value: val,
 	}
 }
 
-func testTable_customVar[T interface{eywa.JSONValue | eywa.JSONBValue;eywa.TypedValue}](val *customType) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_customVar[T interface{eywa.JSONValue | eywa.JSONBValue;eywa.TypedValue}](val *customType) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "custom",
 		Value: eywa.QueryVar("testTable_custom", T{val}),
 	}
 }
 
-func testTable_testTable2(subField eywa.ModelFieldName[testTable2], subFields ...eywa.ModelFieldName[testTable2]) eywa.ModelFieldName[testTable] {
+func testTable_testTable2(subField eywa.FieldName[testTable2], subFields ...eywa.FieldName[testTable2]) eywa.FieldName[testTable] {
 	buf := bytes.NewBuffer([]byte("test_table2 {\n"))
 	buf.WriteString(string(subField))
 	for _, f := range subFields {
@@ -92,73 +92,73 @@ func testTable_testTable2(subField eywa.ModelFieldName[testTable2], subFields ..
 		buf.WriteString(string(f))
 	}
 	buf.WriteString("\n}")
-	return eywa.ModelFieldName[testTable](buf.String())
+	return eywa.FieldName[testTable](buf.String())
 }
-const testTable_JsonBCol eywa.ModelFieldName[testTable] = "jsonb_col"
+const testTable_JsonBCol eywa.FieldName[testTable] = "jsonb_col"
 
-func testTable_JsonBColField(val jsonbcol) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_JsonBColField(val jsonbcol) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "jsonb_col",
 		Value: val,
 	}
 }
 
-func testTable_JsonBColVar[T interface{eywa.JSONValue | eywa.JSONBValue;eywa.TypedValue}](val jsonbcol) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_JsonBColVar[T interface{eywa.JSONValue | eywa.JSONBValue;eywa.TypedValue}](val jsonbcol) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "jsonb_col",
 		Value: eywa.QueryVar("testTable_JsonBCol", T{val}),
 	}
 }
-const testTable_RR eywa.ModelFieldName[testTable] = "r"
+const testTable_RR eywa.FieldName[testTable] = "r"
 
-func testTable_RRField(val R) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_RRField(val R) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "r",
 		Value: val,
 	}
 }
 
-func testTable_RRVar(val R) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_RRVar(val R) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "r",
 		Value: eywa.QueryVar("testTable_RR", eywa.StringVar[R](val)),
 	}
 }
-const testTable_Status eywa.ModelFieldName[testTable] = "status"
+const testTable_Status eywa.FieldName[testTable] = "status"
 
-func testTable_StatusField(val eywa.Enum[status]) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_StatusField(val eywa.Enum[status]) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "status",
 		Value: val,
 	}
 }
 
-func testTable_StatusVar(val eywa.Enum[status]) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_StatusVar(val eywa.Enum[status]) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "status",
 		Value: eywa.QueryVar("testTable_Status", eywa.StringVar[eywa.Enum[status]](val)),
 	}
 }
-const testTable_F eywa.ModelFieldName[testTable] = "f"
+const testTable_F eywa.FieldName[testTable] = "f"
 
-func testTable_FField(val X[string, int]) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_FField(val X[string, int]) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "f",
 		Value: val,
 	}
 }
 
-func testTable_FVar(val X[string, int]) eywa.ModelField[testTable] {
-	return eywa.ModelField[testTable]{
+func testTable_FVar(val X[string, int]) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
 		Name: "f",
 		Value: eywa.QueryVar("testTable_F", eywa.StringVar[X[string, int]](val)),
 	}
 }
 
-const testTable2_ID eywa.ModelFieldName[testTable2] = "id"
+const testTable2_ID eywa.FieldName[testTable2] = "id"
 
-func testTable2_IDField(val uuid.UUID) eywa.ModelField[testTable2] {
-	return eywa.ModelField[testTable2]{
+func testTable2_IDField(val uuid.UUID) eywa.Field[testTable2] {
+	return eywa.Field[testTable2]{
 		Name: "id",
 		Value: val,
 	}
