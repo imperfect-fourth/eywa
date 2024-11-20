@@ -38,6 +38,7 @@ func testTable_AgeVar(val *int) eywa.Field[testTable] {
 		Value: eywa.QueryVar("testTable_Age", eywa.NullableIntVar[*int](val)),
 	}
 }
+const testTable_PkeyConstraint eywa.Constraint[testTable] = "testTable_pkey"
 const testTable_ID eywa.FieldName[testTable] = "id"
 
 func testTable_IDField(val int) eywa.Field[testTable] {
@@ -53,19 +54,19 @@ func testTable_IDVar(val int) eywa.Field[testTable] {
 		Value: eywa.QueryVar("testTable_ID", eywa.IntVar[int](val)),
 	}
 }
-const testTable_iD eywa.FieldName[testTable] = "idd"
+const testTable_IDd eywa.FieldName[testTable] = "idd"
 
-func testTable_iDField(val int32) eywa.Field[testTable] {
+func testTable_IDdField(val int32) eywa.Field[testTable] {
 	return eywa.Field[testTable]{
 		Name: "idd",
 		Value: val,
 	}
 }
 
-func testTable_iDVar(val int32) eywa.Field[testTable] {
+func testTable_IDdVar(val int32) eywa.Field[testTable] {
 	return eywa.Field[testTable]{
 		Name: "idd",
-		Value: eywa.QueryVar("testTable_iD", eywa.IntVar[int32](val)),
+		Value: eywa.QueryVar("testTable_IDd", eywa.IntVar[int32](val)),
 	}
 }
 const testTable_custom eywa.FieldName[testTable] = "custom"
@@ -155,11 +156,27 @@ func testTable_FVar(val X[string, int]) eywa.Field[testTable] {
 	}
 }
 
+const testTable2_PkeyConstraint eywa.Constraint[testTable2] = "testTable2_pkey"
 const testTable2_ID eywa.FieldName[testTable2] = "id"
 
 func testTable2_IDField(val uuid.UUID) eywa.Field[testTable2] {
 	return eywa.Field[testTable2]{
 		Name: "id",
 		Value: val,
+	}
+}
+const testTable2_Age eywa.FieldName[testTable2] = "age"
+
+func testTable2_AgeField(val int) eywa.Field[testTable2] {
+	return eywa.Field[testTable2]{
+		Name: "age",
+		Value: val,
+	}
+}
+
+func testTable2_AgeVar(val int) eywa.Field[testTable2] {
+	return eywa.Field[testTable2]{
+		Name: "age",
+		Value: eywa.QueryVar("testTable2_Age", eywa.IntVar[int](val)),
 	}
 }

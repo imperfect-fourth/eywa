@@ -104,3 +104,5 @@ type QuerySkeleton[M Model] struct {
 func (qs QuerySkeleton[M]) MarshalGQL() string {
 	return fmt.Sprintf("%s%s", qs.ModelName, qs.queryArgs.MarshalGQL())
 }
+
+type Constraint[M Model] string

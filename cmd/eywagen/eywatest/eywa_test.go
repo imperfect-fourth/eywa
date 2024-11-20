@@ -154,3 +154,43 @@ id
 		assert.Equal(t, &testTable2{ID: id}, resp)
 	}
 }
+
+func TestInsertOneQueryOnConflict(t *testing.T) {
+	id := uuid.New()
+	accessKey := os.Getenv("TEST_HGE_ACCESS_KEY")
+	c := eywa.NewClient("https://aware-cowbird-80.hasura.app/v1/graphql", &eywa.ClientOpts{
+		Headers: map[string]string{
+			"x-hasura-access-key": accessKey,
+		},
+	})
+	q := eywa.InsertOne(
+		testTable2_IDField(id),
+		testTable2_AgeField(10),
+	).Select(
+		testTable2_ID,
+	)
+	q.Exec(c)
+
+	q2 := eywa.InsertOne(
+		testTable2_IDField(id),
+		testTable2_AgeField(20),
+	).OnConflict(
+		testTable2_PkeyConstraint,
+		testTable2_Age,
+	).Select(
+		testTable2_ID,
+		testTable2_Age,
+	)
+	expected := fmt.Sprintf(`mutation insert_test_table2_one {
+insert_test_table2_one(object: {age: 20, id: "%s"}, on_conflict: {constraint: testTable2_pkey, update_columns: [age]}) {
+age
+id
+}
+}`, id.String())
+
+	if assert.Equal(t, expected, q2.Query()) {
+		resp, err := q2.Exec(c)
+		assert.NoError(t, err)
+		assert.Equal(t, &testTable2{ID: id, Age: 20}, resp)
+	}
+}

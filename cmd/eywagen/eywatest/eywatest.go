@@ -9,7 +9,7 @@ import (
 type testTable struct {
 	Name       string            `json:"name"`
 	Age        *int              `json:"age"`
-	ID         int               `json:"id,omitempty"`
+	ID         int               `json:"id,omitempty",eywa:"pkey"`
 	IDd        int32             `json:"idd,omitempty"`
 	custom     *customType       `json:"custom"`
 	testTable2 *testTable2       `json:"test_table2"`
@@ -36,7 +36,8 @@ func (t testTable) ModelName() string {
 type customType struct{}
 
 type testTable2 struct {
-	ID uuid.UUID `json:"id"`
+	ID  uuid.UUID `json:"id",eywa:"pkey"`
+	Age int       `json:"age"`
 }
 
 func (t testTable2) ModelName() string {

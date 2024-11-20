@@ -14,6 +14,7 @@ type queryArgs[M Model] struct {
 	orderBy    *orderBy
 	set        *set[M]
 	object     *object[M]
+	onConflict *onConflict[M]
 }
 
 func (qa queryArgs[M]) MarshalGQL() string {
@@ -25,6 +26,7 @@ func (qa queryArgs[M]) MarshalGQL() string {
 	args = appendArg(args, qa.orderBy)
 	args = appendArg(args, qa.set)
 	args = appendArg(args, qa.object)
+	args = appendArg(args, qa.onConflict)
 
 	return fmt.Sprintf("(%s)", strings.Join(args, ", "))
 }
@@ -267,4 +269,20 @@ func (o object[M]) queryArgName() string {
 
 func (o object[M]) MarshalGQL() string {
 	return fmt.Sprintf("%s: {%s}", o.queryArgName(), o.fields.MarshalGQL())
+}
+
+type onConflict[M Model] struct {
+	constraint    Constraint[M]
+	updateColumns FieldNameArray[M]
+}
+
+func (oc onConflict[M]) queryArgName() string {
+	return "on_conflict"
+}
+
+func (oc onConflict[M]) MarshalGQL() string {
+	if oc.updateColumns == nil {
+		return fmt.Sprintf("%s: {constraint: %s}", oc.queryArgName(), string(oc.constraint))
+	}
+	return fmt.Sprintf("%s: {constraint: %s, update_columns: [%s]}", oc.queryArgName(), string(oc.constraint), oc.updateColumns.MarshalGQL())
 }
