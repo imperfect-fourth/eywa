@@ -16,6 +16,8 @@ func (a testAction) ModelName() string {
 }
 
 func TestActionQuery(t *testing.T) {
+	const state2 = "state2"
+
 	q := Action[testAction]().QueryArgs(
 		map[string]interface{}{
 			"arg1": 4,

@@ -6,17 +6,17 @@ import (
 	"strings"
 )
 
-type queryArgs[M Model, FN FieldName[M], F Field[M]] struct {
+type queryArgs[M Model] struct {
 	limit      *limit
 	offset     *offset
-	distinctOn *distinctOn[M, FN]
+	distinctOn *distinctOn[M]
 	where      *where
 	orderBy    *orderBy
-	set        *set[M, F]
-	object     *object[M, F]
+	set        *set[M]
+	object     *object[M]
 }
 
-func (qa queryArgs[M, FN, F]) MarshalGQL() string {
+func (qa queryArgs[M]) MarshalGQL() string {
 	var args []string
 	args = appendArg(args, qa.limit)
 	args = appendArg(args, qa.offset)
@@ -63,14 +63,14 @@ func (o offset) MarshalGQL() string {
 	return fmt.Sprintf("%s: %d", o.queryArgName(), o)
 }
 
-type distinctOn[M Model, FN FieldName[M]] struct {
-	field FN
+type distinctOn[M Model] struct {
+	field FieldName[M]
 }
 
-func (do distinctOn[M, FN]) queryArgName() string {
+func (do distinctOn[M]) queryArgName() string {
 	return "distinct_on"
 }
-func (do distinctOn[M, FN]) MarshalGQL() string {
+func (do distinctOn[M]) MarshalGQL() string {
 	return fmt.Sprintf("%s: %s", do.queryArgName(), do.field)
 }
 
@@ -85,18 +85,18 @@ func (w where) MarshalGQL() string {
 	return fmt.Sprintf("%s: %s", w.queryArgName(), w.WhereExpr.MarshalGQL())
 }
 
-type set[M Model, F Field[M]] struct {
-	fieldArr[M, F]
+type set[M Model] struct {
+	FieldArray[M]
 }
 
-func (s set[M, F]) queryArgName() string {
+func (s set[M]) queryArgName() string {
 	return "_set"
 }
-func (s set[M, F]) MarshalGQL() string {
-	if len(s.fieldArr) == 0 {
+func (s set[M]) MarshalGQL() string {
+	if len(s.FieldArray) == 0 {
 		return ""
 	}
-	return fmt.Sprintf("%s: {%s}", s.queryArgName(), s.fieldArr.MarshalGQL())
+	return fmt.Sprintf("%s: {%s}", s.queryArgName(), s.FieldArray.MarshalGQL())
 }
 
 type operator string
@@ -110,33 +110,33 @@ const (
 	lte operator = "_lte"
 )
 
-func compare[M Model, F Field[M]](oprtr operator, field F) *WhereExpr {
+func compare[M Model](oprtr operator, field Field[M]) *WhereExpr {
 	return &WhereExpr{
 		cmp: fmt.Sprintf("%s: {%s: %s}", field.GetName(), oprtr, field.GetValue()),
 	}
 }
 
-func Eq[M Model, F Field[M]](field F) *WhereExpr {
+func Eq[M Model](field Field[M]) *WhereExpr {
 	return compare[M](eq, field)
 }
 
-func Neq[M Model, F Field[M]](field F) *WhereExpr {
+func Neq[M Model](field Field[M]) *WhereExpr {
 	return compare[M](neq, field)
 }
 
-func Gt[M Model, F Field[M]](field F) *WhereExpr {
+func Gt[M Model](field Field[M]) *WhereExpr {
 	return compare[M](gt, field)
 }
 
-func Gte[M Model, F Field[M]](field F) *WhereExpr {
+func Gte[M Model](field Field[M]) *WhereExpr {
 	return compare[M](gte, field)
 }
 
-func Lt[M Model, F Field[M]](field F) *WhereExpr {
+func Lt[M Model](field Field[M]) *WhereExpr {
 	return compare[M](lt, field)
 }
 
-func Lte[M Model, F Field[M]](field F) *WhereExpr {
+func Lte[M Model](field Field[M]) *WhereExpr {
 	return compare[M](lte, field)
 }
 
@@ -218,22 +218,22 @@ func (ob OrderByExpr) MarshalGQL() string {
 	return fmt.Sprintf("%s: %s", ob.field, ob.order)
 }
 
-func Asc[M Model, FN FieldName[M]](field FN) OrderByExpr {
+func Asc[M Model](field FieldName[M]) OrderByExpr {
 	return OrderByExpr{"asc", string(field)}
 }
-func AscNullsFirsst[M Model, FN FieldName[M]](field FN) OrderByExpr {
+func AscNullsFirst[M Model](field FieldName[M]) OrderByExpr {
 	return OrderByExpr{"asc_nulls_first", string(field)}
 }
-func AscNullsLast[M Model, FN FieldName[M]](field FN) OrderByExpr {
+func AscNullsLast[M Model](field FieldName[M]) OrderByExpr {
 	return OrderByExpr{"asc_nulls_last", string(field)}
 }
-func Desc[M Model, FN FieldName[M]](field FN) OrderByExpr {
+func Desc[M Model](field FieldName[M]) OrderByExpr {
 	return OrderByExpr{"desc", string(field)}
 }
-func DescNullsFirst[M Model, FN FieldName[M]](field FN) OrderByExpr {
+func DescNullsFirst[M Model](field FieldName[M]) OrderByExpr {
 	return OrderByExpr{"desc_nulls_first", string(field)}
 }
-func DescNullsLast[M Model, FN FieldName[M]](field FN) OrderByExpr {
+func DescNullsLast[M Model](field FieldName[M]) OrderByExpr {
 	return OrderByExpr{"desc_nulls_last", string(field)}
 }
 
@@ -257,14 +257,14 @@ func (oba orderBy) MarshalGQL() string {
 	return fmt.Sprintf("%s: {%s}", oba.queryArgName(), strings.Join(stringArr, ", "))
 }
 
-type object[M Model, F Field[M]] struct {
-	fields fieldArr[M, F]
+type object[M Model] struct {
+	fields FieldArray[M]
 }
 
-func (o object[M, F]) queryArgName() string {
+func (o object[M]) queryArgName() string {
 	return "object"
 }
 
-func (o object[M, F]) MarshalGQL() string {
+func (o object[M]) MarshalGQL() string {
 	return fmt.Sprintf("%s: {%s}", o.queryArgName(), o.fields.MarshalGQL())
 }

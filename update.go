@@ -5,21 +5,21 @@ import (
 	"fmt"
 )
 
-func Update[M Model, MP ModelPtr[M]]() UpdateQueryBuilder[M, ModelFieldName[M], ModelField[M]] {
-	return UpdateQueryBuilder[M, ModelFieldName[M], ModelField[M]]{
-		QuerySkeleton: QuerySkeleton[M, ModelFieldName[M], ModelField[M]]{
+func Update[M Model, MP ModelPtr[M]]() UpdateQueryBuilder[M] {
+	return UpdateQueryBuilder[M]{
+		QuerySkeleton: QuerySkeleton[M]{
 			ModelName: (*new(M)).ModelName(),
 			//			fields:    append(fields, field),
 		},
 	}
 }
 
-type UpdateQueryBuilder[M Model, FN FieldName[M], F Field[M]] struct {
-	QuerySkeleton[M, FN, F]
+type UpdateQueryBuilder[M Model] struct {
+	QuerySkeleton[M]
 }
 
-func (uq UpdateQueryBuilder[M, FN, F]) Set(fields ...F) UpdateQueryBuilder[M, FN, F] {
-	uq.set = &set[M, F]{fieldArr[M, F](fields)}
+func (uq UpdateQueryBuilder[M]) Set(fields ...Field[M]) UpdateQueryBuilder[M] {
+	uq.set = &set[M]{FieldArray[M](fields)}
 	for _, f := range fields {
 		if var_, ok := f.GetRawValue().(queryVar); ok {
 			uq.queryVars = append(uq.queryVars, var_)
@@ -28,12 +28,12 @@ func (uq UpdateQueryBuilder[M, FN, F]) Set(fields ...F) UpdateQueryBuilder[M, FN
 	return uq
 }
 
-func (uq UpdateQueryBuilder[M, FN, F]) Where(w *WhereExpr) UpdateQueryBuilder[M, FN, F] {
+func (uq UpdateQueryBuilder[M]) Where(w *WhereExpr) UpdateQueryBuilder[M] {
 	uq.where = &where{w}
 	return uq
 }
 
-func (uq *UpdateQueryBuilder[M, FN, F]) MarshalGQL() string {
+func (uq *UpdateQueryBuilder[M]) MarshalGQL() string {
 	if uq.where == nil {
 		uq.where = &where{Not(&WhereExpr{})}
 	}
@@ -43,27 +43,27 @@ func (uq *UpdateQueryBuilder[M, FN, F]) MarshalGQL() string {
 	)
 }
 
-func (uq UpdateQueryBuilder[M, FN, F]) Select(field FN, fields ...FN) UpdateQuery[M, FN, F] {
-	return UpdateQuery[M, FN, F]{
+func (uq UpdateQueryBuilder[M]) Select(field FieldName[M], fields ...FieldName[M]) UpdateQuery[M] {
+	return UpdateQuery[M]{
 		uq:     &uq,
 		fields: append(fields, field),
 	}
 }
 
-type UpdateQuery[M Model, FN FieldName[M], F Field[M]] struct {
-	uq     *UpdateQueryBuilder[M, FN, F]
-	fields []FN
+type UpdateQuery[M Model] struct {
+	uq     *UpdateQueryBuilder[M]
+	fields []FieldName[M]
 }
 
-func (uq UpdateQuery[M, FN, F]) MarshalGQL() string {
+func (uq UpdateQuery[M]) MarshalGQL() string {
 	return fmt.Sprintf(
 		"%s {\nreturning {\n%s\n}\n}",
 		uq.uq.MarshalGQL(),
-		FieldNameArr[M, FN](uq.fields).MarshalGQL(),
+		FieldNameArray[M](uq.fields).MarshalGQL(),
 	)
 }
 
-func (uq UpdateQuery[M, FN, F]) Query() string {
+func (uq UpdateQuery[M]) Query() string {
 	return fmt.Sprintf(
 		"mutation update_%s%s {\n%s\n}",
 		uq.uq.ModelName,
@@ -72,7 +72,7 @@ func (uq UpdateQuery[M, FN, F]) Query() string {
 	)
 }
 
-func (uq UpdateQuery[M, FN, F]) Variables() map[string]interface{} {
+func (uq UpdateQuery[M]) Variables() map[string]interface{} {
 	vars := map[string]interface{}{}
 	for _, var_ := range uq.uq.queryVars {
 		vars[var_.name] = var_.value.Value()
@@ -80,7 +80,7 @@ func (uq UpdateQuery[M, FN, F]) Variables() map[string]interface{} {
 	return vars
 }
 
-func (uq UpdateQuery[M, FN, F]) Exec(client *Client) ([]M, error) {
+func (uq UpdateQuery[M]) Exec(client *Client) ([]M, error) {
 	respBytes, err := client.Do(uq)
 	if err != nil {
 		return nil, err
