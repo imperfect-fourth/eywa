@@ -7,16 +7,16 @@ import (
 
 //go:generate ../eywagen -types testTable,testTable2
 type testTable struct {
-	Name       string                  `json:"name"`
-	Age        *int                    `json:"age"`
-	ID         int                     `json:"id,omitempty"`
-	iD         int32                   `json:"idd,omitempty"`
-	custom     *customType             `json:"custom"`
-	testTable2 *testTable2             `json:"test_table2"`
-	JsonBCol   jsonbcol                `json:"jsonb_col"`
-	RR         R                       `json:"r"`
+	Name       string            `json:"name"`
+	Age        *int              `json:"age"`
+	ID         int               `json:"id,omitempty"`
+	iD         int32             `json:"idd,omitempty"`
+	custom     *customType       `json:"custom"`
+	testTable2 *testTable2       `json:"test_table2"`
+	JsonBCol   jsonbcol          `json:"jsonb_col"`
+	RR         R                 `json:"r"`
 	Status     eywa.Enum[status] `json:"status"`
-	F          X[string, int]          `json:"f"`
+	F          X[string, int]    `json:"f"`
 }
 
 type status string
