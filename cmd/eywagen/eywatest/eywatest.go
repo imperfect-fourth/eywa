@@ -10,7 +10,7 @@ type testTable struct {
 	Name       string            `json:"name"`
 	Age        *int              `json:"age"`
 	ID         int               `json:"id,omitempty"`
-	iD         int32             `json:"idd,omitempty"`
+	IDd        int32             `json:"idd,omitempty"`
 	custom     *customType       `json:"custom"`
 	testTable2 *testTable2       `json:"test_table2"`
 	JsonBCol   jsonbcol          `json:"jsonb_col"`
@@ -25,7 +25,6 @@ type X[T ~string, U ~int] string
 
 var (
 	state1 eywa.Enum[status] = "state1"
-	state2 eywa.Enum[status] = "state2"
 )
 
 type R string

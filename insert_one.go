@@ -23,12 +23,12 @@ type InsertOneQueryBuilder[M Model] struct {
 	QuerySkeleton[M]
 }
 
-//func (iq InsertOneQueryBuilder[M]) OnConstraint(constraint eywa.Constraint[M], field FieldName[M], fields ...FieldName[M]) InsertOneQuery[M] {
-//	return InsertOneQuery[M]{
-//		iq:     &iq,
-//		fields: append(fields, field),
-//	}
-//}
+// func (iq InsertOneQueryBuilder[M]) OnConstraint(constraint eywa.Constraint[M], field FieldName[M], fields ...FieldName[M]) InsertOneQuery[M] {
+// 	return InsertOneQuery[M]{
+// 		iq:     &iq,
+// 		fields: append(fields, field),
+// 	}
+// }
 
 func (iq *InsertOneQueryBuilder[M]) MarshalGQL() string {
 	return fmt.Sprintf(
