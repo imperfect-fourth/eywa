@@ -9,6 +9,7 @@ import (
 )
 
 
+var testTable_PkeyConstraint = eywa.Constraint[testTable](fmt.Sprintf("%s_pkey", (new(testTable)).ModelName()))
 const testTable_Name eywa.FieldName[testTable] = "name"
 
 func testTable_NameField(val string) eywa.Field[testTable] {
@@ -39,7 +40,6 @@ func testTable_AgeVar(val *int) eywa.Field[testTable] {
 		Value: eywa.QueryVar("testTable_Age", eywa.NullableIntVar[*int](val)),
 	}
 }
-var testTable_PkeyConstraint = eywa.Constraint[testTable](fmt.Sprintf("%s_pkey", (new(testTable)).ModelName()))
 const testTable_ID eywa.FieldName[testTable] = "id"
 
 func testTable_IDField(val int) eywa.Field[testTable] {
