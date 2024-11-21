@@ -59,7 +59,7 @@ func TestRelationshipSelectQuery(t *testing.T) {
 
 	expected := `query get_test_table {
 test_table(limit: 2, offset: 1, distinct_on: name, where: {_or: [{name: {_eq: "abcd"}}, {age: {_eq: 10}}]}, order_by: {name: desc}) {
-test_table2 {
+testTable2 {
 id
 }
 name
@@ -135,8 +135,8 @@ func TestInsertOneQuery(t *testing.T) {
 	).Select(
 		testTable2_ID,
 	)
-	expected := fmt.Sprintf(`mutation insert_test_table2_one {
-insert_test_table2_one(object: {id: "%s"}) {
+	expected := fmt.Sprintf(`mutation insert_testTable2_one {
+insert_testTable2_one(object: {id: "%s"}) {
 id
 }
 }`, id.String())
@@ -181,8 +181,8 @@ func TestInsertOneQueryOnConflict(t *testing.T) {
 		testTable2_ID,
 		testTable2_Age,
 	)
-	expected := fmt.Sprintf(`mutation insert_test_table2_one {
-insert_test_table2_one(object: {age: 20, id: "%s"}, on_conflict: {constraint: testTable2_pkey, update_columns: [age]}) {
+	expected := fmt.Sprintf(`mutation insert_testTable2_one {
+insert_testTable2_one(object: {age: 20, id: "%s"}, on_conflict: {constraint: testTable2_pkey, update_columns: [age]}) {
 age
 id
 }

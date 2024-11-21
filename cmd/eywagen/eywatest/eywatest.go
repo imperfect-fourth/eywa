@@ -12,7 +12,7 @@ type testTable struct {
 	ID         int               `json:"id,omitempty",eywa:"pkey"`
 	IDd        int32             `json:"idd,omitempty"`
 	custom     *customType       `json:"custom"`
-	testTable2 *testTable2       `json:"test_table2"`
+	testTable2 *testTable2       `json:"testTable2"`
 	JsonBCol   jsonbcol          `json:"jsonb_col"`
 	RR         R                 `json:"r"`
 	Status     eywa.Enum[status] `json:"status"`
@@ -41,7 +41,7 @@ type testTable2 struct {
 }
 
 func (t testTable2) ModelName() string {
-	return "test_table2"
+	return "testTable2"
 }
 
 type jsonbcol struct {

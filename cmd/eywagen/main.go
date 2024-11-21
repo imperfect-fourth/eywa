@@ -68,7 +68,7 @@ func %s(subField eywa.FieldName[%s], subFields ...eywa.FieldName[%s]) eywa.Field
 )
 
 func pkeyConstraint(typeName string) string {
-	return fmt.Sprintf("const %s_PkeyConstraint eywa.Constraint[%s] = \"%s_pkey\"\n", typeName, typeName, typeName)
+	return fmt.Sprintf("var %s_PkeyConstraint = eywa.Constraint[%s](fmt.Sprintf(\"%%s_pkey\", (new(%s)).ModelName()))\n", typeName, typeName, typeName)
 }
 
 func main() {
@@ -167,6 +167,7 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) error
 					}
 					if v == "pkey" {
 						foundPkey = true
+						contents.importsMap["fmt"] = true
 						contents.content.WriteString(pkeyConstraint(typeName))
 						pkey = fieldName
 					}
