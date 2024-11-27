@@ -2,6 +2,7 @@ package eywa
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -40,7 +41,7 @@ func NewClient(gqlEndpoint string, opt *ClientOpts) *Client {
 	return c
 }
 
-func (c *Client) Do(q Queryable) (*bytes.Buffer, error) {
+func (c *Client) Do(ctx context.Context, q Queryable) (*bytes.Buffer, error) {
 	reqObj := graphqlRequest{
 		Query:     q.Query(),
 		Variables: q.Variables(),
@@ -51,7 +52,7 @@ func (c *Client) Do(q Queryable) (*bytes.Buffer, error) {
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, c.endpoint, &reqBytes)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint, &reqBytes)
 	if err != nil {
 		return nil, err
 	}
