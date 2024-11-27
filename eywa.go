@@ -19,6 +19,7 @@ type GraphQLError struct {
 
 type Model interface {
 	ModelName() string
+	TableName() string
 }
 
 type ModelPtr[T Model] interface {

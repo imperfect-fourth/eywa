@@ -9,7 +9,7 @@ import (
 )
 
 
-var testTable_PkeyConstraint = eywa.Constraint[testTable](fmt.Sprintf("%s_pkey", (new(testTable)).ModelName()))
+var testTable_PkeyConstraint = eywa.Constraint[testTable](fmt.Sprintf("%s_pkey", (new(testTable)).TableName()))
 const testTable_Name eywa.FieldName[testTable] = "name"
 
 func testTable_NameField(val string) eywa.Field[testTable] {
@@ -157,7 +157,7 @@ func testTable_FVar(val X[string, int]) eywa.Field[testTable] {
 	}
 }
 
-var testTable2_PkeyConstraint = eywa.Constraint[testTable2](fmt.Sprintf("%s_pkey", (new(testTable2)).ModelName()))
+var testTable2_PkeyConstraint = eywa.Constraint[testTable2](fmt.Sprintf("%s_pkey", (new(testTable2)).TableName()))
 const testTable2_ID eywa.FieldName[testTable2] = "id"
 
 func testTable2_IDField(val uuid.UUID) eywa.Field[testTable2] {

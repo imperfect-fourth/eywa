@@ -29,6 +29,10 @@ var (
 
 type R string
 
+func (t testTable) TableName() string {
+	return "test_table"
+}
+
 func (t testTable) ModelName() string {
 	return "test_table"
 }
@@ -40,6 +44,9 @@ type testTable2 struct {
 	Age int       `json:"age"`
 }
 
+func (t testTable2) TableName() string {
+	return "testTable2"
+}
 func (t testTable2) ModelName() string {
 	return "testTable2"
 }

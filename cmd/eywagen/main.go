@@ -67,7 +67,7 @@ func %s(subField eywa.FieldName[%s], subFields ...eywa.FieldName[%s]) eywa.Field
 )
 
 func pkeyConstraint(typeName string) string {
-	return fmt.Sprintf("var %s_PkeyConstraint = eywa.Constraint[%s](fmt.Sprintf(\"%%s_pkey\", (new(%s)).ModelName()))\n", typeName, typeName, typeName)
+	return fmt.Sprintf("var %s_PkeyConstraint = eywa.Constraint[%s](fmt.Sprintf(\"%%s_pkey\", (new(%s)).TableName()))\n", typeName, typeName, typeName)
 }
 
 func main() {
