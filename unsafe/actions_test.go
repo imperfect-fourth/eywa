@@ -14,6 +14,9 @@ type testAction struct {
 func (a testAction) ModelName() string {
 	return "test_action"
 }
+func (a testAction) TableName() string {
+	return "test_action"
+}
 
 func TestActionQuery(t *testing.T) {
 	const state2 = "state2"
