@@ -1,6 +1,7 @@
 package eywa
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 )
@@ -77,7 +78,10 @@ func (iq InsertOneQuery[M]) Variables() map[string]interface{} {
 }
 
 func (iq InsertOneQuery[M]) Exec(client *Client) (*M, error) {
-	respBytes, err := client.Do(iq)
+	return iq.ExecWithContext(context.Background(), client)
+}
+func (iq InsertOneQuery[M]) ExecWithContext(ctx context.Context, client *Client) (*M, error) {
+	respBytes, err := client.Do(ctx, iq)
 	if err != nil {
 		return nil, err
 	}

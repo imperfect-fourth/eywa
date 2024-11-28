@@ -12,7 +12,7 @@ type testTable struct {
 	ID         int               `json:"id,omitempty",eywa:"pkey"`
 	IDd        int32             `json:"idd,omitempty"`
 	custom     *customType       `json:"custom"`
-	testTable2 *testTable2       `json:"test_table2"`
+	testTable2 *testTable2       `json:"testTable2"`
 	JsonBCol   jsonbcol          `json:"jsonb_col"`
 	RR         R                 `json:"r"`
 	Status     eywa.Enum[status] `json:"status"`
@@ -29,6 +29,10 @@ var (
 
 type R string
 
+func (t testTable) TableName() string {
+	return "test_table"
+}
+
 func (t testTable) ModelName() string {
 	return "test_table"
 }
@@ -40,8 +44,11 @@ type testTable2 struct {
 	Age int       `json:"age"`
 }
 
+func (t testTable2) TableName() string {
+	return "testTable2"
+}
 func (t testTable2) ModelName() string {
-	return "test_table2"
+	return "testTable2"
 }
 
 type jsonbcol struct {

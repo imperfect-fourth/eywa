@@ -2,6 +2,7 @@ package unsafe
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -93,7 +94,7 @@ func (aq ActionQuery[M]) Variables() map[string]interface{} {
 }
 
 func (aq ActionQuery[M]) Exec(client *eywa.Client) (*M, error) {
-	respBytes, err := client.Do(aq)
+	respBytes, err := client.Do(context.Background(), aq)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package eywa
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 )
@@ -81,7 +82,11 @@ func (uq UpdateQuery[M]) Variables() map[string]interface{} {
 }
 
 func (uq UpdateQuery[M]) Exec(client *Client) ([]M, error) {
-	respBytes, err := client.Do(uq)
+	return uq.ExecWithContext(context.Background(), client)
+}
+
+func (uq UpdateQuery[M]) ExecWithContext(ctx context.Context, client *Client) ([]M, error) {
+	respBytes, err := client.Do(ctx, uq)
 	if err != nil {
 		return nil, err
 	}

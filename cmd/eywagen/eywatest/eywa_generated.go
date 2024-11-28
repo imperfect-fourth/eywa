@@ -3,11 +3,13 @@ package eywatest
 
 import (
 	"github.com/imperfect-fourth/eywa"
+	"fmt"
 	"bytes"
 	"github.com/google/uuid"
 )
 
 
+var testTable_PkeyConstraint = eywa.Constraint[testTable](fmt.Sprintf("%s_pkey", (new(testTable)).TableName()))
 const testTable_Name eywa.FieldName[testTable] = "name"
 
 func testTable_NameField(val string) eywa.Field[testTable] {
@@ -38,7 +40,6 @@ func testTable_AgeVar(val *int) eywa.Field[testTable] {
 		Value: eywa.QueryVar("testTable_Age", eywa.NullableIntVar[*int](val)),
 	}
 }
-const testTable_PkeyConstraint eywa.Constraint[testTable] = "testTable_pkey"
 const testTable_ID eywa.FieldName[testTable] = "id"
 
 func testTable_IDField(val int) eywa.Field[testTable] {
@@ -86,7 +87,7 @@ func testTable_customVar[T interface{eywa.JSONValue | eywa.JSONBValue;eywa.Typed
 }
 
 func testTable_testTable2(subField eywa.FieldName[testTable2], subFields ...eywa.FieldName[testTable2]) eywa.FieldName[testTable] {
-	buf := bytes.NewBuffer([]byte("test_table2 {\n"))
+	buf := bytes.NewBuffer([]byte("testTable2 {\n"))
 	buf.WriteString(string(subField))
 	for _, f := range subFields {
 		buf.WriteString("\n")
@@ -156,7 +157,7 @@ func testTable_FVar(val X[string, int]) eywa.Field[testTable] {
 	}
 }
 
-const testTable2_PkeyConstraint eywa.Constraint[testTable2] = "testTable2_pkey"
+var testTable2_PkeyConstraint = eywa.Constraint[testTable2](fmt.Sprintf("%s_pkey", (new(testTable2)).TableName()))
 const testTable2_ID eywa.FieldName[testTable2] = "id"
 
 func testTable2_IDField(val uuid.UUID) eywa.Field[testTable2] {

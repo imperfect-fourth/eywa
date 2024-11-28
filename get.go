@@ -1,6 +1,7 @@
 package eywa
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -82,7 +83,11 @@ func (sq GetQuery[M]) Variables() map[string]interface{} {
 }
 
 func (sq GetQuery[M]) Exec(client *Client) ([]M, error) {
-	respBytes, err := client.Do(sq)
+	return sq.ExecWithContext(context.Background(), client)
+}
+
+func (sq GetQuery[M]) ExecWithContext(ctx context.Context, client *Client) ([]M, error) {
+	respBytes, err := client.Do(ctx, sq)
 	if err != nil {
 		return nil, err
 	}
