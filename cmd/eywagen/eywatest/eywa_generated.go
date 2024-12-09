@@ -85,6 +85,14 @@ func testTable_customVar[T interface{eywa.JSONValue | eywa.JSONBValue;eywa.Typed
 		Value: eywa.QueryVar("testTable_custom", T{val}),
 	}
 }
+const testTable_customArr eywa.FieldName[testTable] = "customarr"
+
+func testTable_customArrField(val []*customType) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
+		Name: "customarr",
+		Value: val,
+	}
+}
 
 func testTable_testTable2(subField eywa.FieldName[testTable2], subFields ...eywa.FieldName[testTable2]) eywa.FieldName[testTable] {
 	buf := bytes.NewBuffer([]byte("testTable2 {\n"))

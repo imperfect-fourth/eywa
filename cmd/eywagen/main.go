@@ -131,16 +131,16 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) error
 
 	typeObj := pkg.Scope().Lookup(typeName)
 	if typeObj == nil {
-		fmt.Printf("type %s not found in package, skipping...", typeName)
+		fmt.Printf("type %s not found in package, skipping...\n", typeName)
 		return nil
 	}
 	typeStruct, ok := typeObj.Type().Underlying().(*types.Struct)
 	if !ok {
-		fmt.Printf("type %s is not a struct, skipping...", typeName)
+		fmt.Printf("type %s is not a struct, skipping...\n", typeName)
 		return nil
 	}
 	if types.NewMethodSet(types.NewPointer(typeObj.Type())).Lookup(pkg, "ModelName") == nil {
-		fmt.Printf("struct type %s does not implement eywa.Model interface, skipping...", typeName)
+		fmt.Printf("struct type %s does not implement eywa.Model interface, skipping...\n", typeName)
 		return nil
 	}
 
@@ -160,15 +160,13 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) error
 		contents.importsMap["fmt"] = true
 		field := typeStruct.Field(i)
 		fieldType := field.Type()
-		importPackages, fieldTypeNameFull := parseFieldTypeName(field.Type().String(), pkg.Path())
-		for _, p := range importPackages {
-			contents.importsMap[p] = true
-		}
+		fieldScalarGqlType := gqlType(fieldType.Underlying().String())
+
+		_, fieldTypeNameFull := parseFieldTypeName(fieldType.String(), pkg.Path())
 		fieldTypeName := fieldTypeNameFull
 		if fieldTypeNameFull[0] == '*' {
 			fieldTypeName = fieldTypeNameFull[1:]
 		}
-		fieldScalarGqlType := gqlType(fieldType.Underlying().String())
 
 		// *struct -> struct, *[] -> [], *int -> int, etc
 		if ptr, ok := fieldType.(*types.Pointer); ok {
@@ -187,6 +185,11 @@ func parseType(typeName string, pkg *types.Package, contents *fileContent) error
 			fieldGqlType = "eywa.JSONValue | eywa.JSONBValue"
 		} else if _, ok := fieldType.Underlying().(*types.Map); ok {
 			fieldGqlType = "eywa.JSONValue | eywa.JSONBValue"
+		}
+
+		importPackages, _ := parseFieldTypeName(fieldType.String(), pkg.Path())
+		for _, p := range importPackages {
+			contents.importsMap[p] = true
 		}
 
 		switch fieldType := fieldType.(type) {
@@ -327,17 +330,18 @@ func parseFieldTypeName(name, rootPkgPath string) (importPackages []string, type
 	genericTypeRegex := re.MustCompile(`^(.*?)(\[(.*)\])?$`)
 	genericMatches := genericTypeRegex.FindStringSubmatch(name)
 
-	rgx := re.MustCompile(`^(\*)?(.*/(.*))\.(.*)$`)
+	rgx := re.MustCompile(`^(\[\])?(\*)?(.*/(.*))\.(.*)$`)
 	matches := rgx.FindStringSubmatch(genericMatches[1])
 	// basic types: int, string, etc
 	if len(matches) == 0 {
 		return nil, name
 	}
 	importPackages = []string{}
-	pointer := matches[1]
-	typePackagePath := matches[2]
-	typePackageName := matches[3]
-	typeName = matches[4]
+	array := matches[1]
+	pointer := matches[2]
+	typePackagePath := matches[3]
+	typePackageName := matches[4]
+	typeName = matches[5]
 	// if type has generic type parameters
 	if genericMatches[2] != "" {
 		typeParams := strings.Split(genericMatches[3], ", ")
@@ -351,10 +355,10 @@ func parseFieldTypeName(name, rootPkgPath string) (importPackages []string, type
 	}
 	// if type's source pkg is not the same as root package, import
 	if rootPkgPath == typePackagePath {
-		return importPackages, fmt.Sprintf("%s%s", pointer, typeName)
+		return importPackages, fmt.Sprintf("%s%s%s", array, pointer, typeName)
 	}
-	importPackages = append(importPackages, matches[2])
-	return importPackages, fmt.Sprintf("%s%s.%s", pointer, typePackageName, typeName)
+	importPackages = append(importPackages, matches[3])
+	return importPackages, fmt.Sprintf("%s%s%s.%s", array, pointer, typePackageName, typeName)
 }
 
 var gqlTypes = map[string]string{

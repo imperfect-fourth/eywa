@@ -12,6 +12,7 @@ type testTable struct {
 	ID         int                      `json:"id,omitempty",eywa:"pkey"`
 	IDd        int32                    `json:"idd,omitempty"`
 	custom     *customType              `json:"custom"`
+	customArr  []*customType            `json:"customarr"`
 	testTable2 *testTable2              `json:"testTable2"`
 	JsonBCol   jsonbcol                 `json:"jsonb_col"`
 	Status     eywa.Enum[status]        `json:"status"`
