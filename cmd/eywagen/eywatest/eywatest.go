@@ -7,27 +7,25 @@ import (
 
 //go:generate ../eywagen -types testTable,testTable2
 type testTable struct {
-	Name       string            `json:"name"`
-	Age        *int              `json:"age"`
-	ID         int               `json:"id,omitempty",eywa:"pkey"`
-	IDd        int32             `json:"idd,omitempty"`
-	custom     *customType       `json:"custom"`
-	testTable2 *testTable2       `json:"testTable2"`
-	JsonBCol   jsonbcol          `json:"jsonb_col"`
-	RR         R                 `json:"r"`
-	Status     eywa.Enum[status] `json:"status"`
-	F          X[string, int]    `json:"f"`
+	Name       string                   `json:"name"`
+	Age        *int                     `json:"age"`
+	ID         int                      `json:"id,omitempty",eywa:"pkey"`
+	IDd        int32                    `json:"idd,omitempty"`
+	custom     *customType              `json:"custom"`
+	testTable2 *testTable2              `json:"testTable2"`
+	JsonBCol   jsonbcol                 `json:"jsonb_col"`
+	Status     eywa.Enum[status]        `json:"status"`
+	Generic    GenericType[string, int] `json:"generic_type"`
+	ArrayCol   []string                 `json:"testarr"`
 }
 
 type status string
 
-type X[T ~string, U ~int] string
+type GenericType[T ~string, U ~int] string
 
 var (
 	state1 eywa.Enum[status] = "state1"
 )
-
-type R string
 
 func (t testTable) TableName() string {
 	return "test_table"

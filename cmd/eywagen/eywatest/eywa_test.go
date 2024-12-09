@@ -41,6 +41,21 @@ name
 	}
 }
 
+func TestSelectArrayColumn(t *testing.T) {
+	accessKey := os.Getenv("TEST_HGE_ACCESS_KEY")
+	c := eywa.NewClient("https://aware-cowbird-80.hasura.app/v1/graphql", &eywa.ClientOpts{
+		Headers: map[string]string{
+			"x-hasura-access-key": accessKey,
+		},
+	})
+	out, err := eywa.Get[testTable]().Where(
+		eywa.Eq[testTable](testTable_IDField(1)),
+	).Select(
+		testTable_ArrayCol,
+	).Exec(c)
+	fmt.Println(out[0].ArrayCol, err)
+}
+
 func TestRelationshipSelectQuery(t *testing.T) {
 	age := 10
 	q := eywa.Get[testTable]().Limit(2).Offset(1).DistinctOn(testTable_Name).OrderBy(

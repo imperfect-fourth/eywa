@@ -2,10 +2,10 @@
 package eywatest
 
 import (
-	"github.com/imperfect-fourth/eywa"
-	"fmt"
 	"bytes"
 	"github.com/google/uuid"
+	"github.com/imperfect-fourth/eywa"
+	"fmt"
 )
 
 
@@ -111,21 +111,6 @@ func testTable_JsonBColVar[T interface{eywa.JSONValue | eywa.JSONBValue;eywa.Typ
 		Value: eywa.QueryVar("testTable_JsonBCol", T{val}),
 	}
 }
-const testTable_RR eywa.FieldName[testTable] = "r"
-
-func testTable_RRField(val R) eywa.Field[testTable] {
-	return eywa.Field[testTable]{
-		Name: "r",
-		Value: val,
-	}
-}
-
-func testTable_RRVar(val R) eywa.Field[testTable] {
-	return eywa.Field[testTable]{
-		Name: "r",
-		Value: eywa.QueryVar("testTable_RR", eywa.StringVar[R](val)),
-	}
-}
 const testTable_Status eywa.FieldName[testTable] = "status"
 
 func testTable_StatusField(val eywa.Enum[status]) eywa.Field[testTable] {
@@ -141,19 +126,27 @@ func testTable_StatusVar(val eywa.Enum[status]) eywa.Field[testTable] {
 		Value: eywa.QueryVar("testTable_Status", eywa.StringVar[eywa.Enum[status]](val)),
 	}
 }
-const testTable_F eywa.FieldName[testTable] = "f"
+const testTable_Generic eywa.FieldName[testTable] = "generic_type"
 
-func testTable_FField(val X[string, int]) eywa.Field[testTable] {
+func testTable_GenericField(val GenericType[string, int]) eywa.Field[testTable] {
 	return eywa.Field[testTable]{
-		Name: "f",
+		Name: "generic_type",
 		Value: val,
 	}
 }
 
-func testTable_FVar(val X[string, int]) eywa.Field[testTable] {
+func testTable_GenericVar(val GenericType[string, int]) eywa.Field[testTable] {
 	return eywa.Field[testTable]{
-		Name: "f",
-		Value: eywa.QueryVar("testTable_F", eywa.StringVar[X[string, int]](val)),
+		Name: "generic_type",
+		Value: eywa.QueryVar("testTable_Generic", eywa.StringVar[GenericType[string, int]](val)),
+	}
+}
+const testTable_ArrayCol eywa.FieldName[testTable] = "testarr"
+
+func testTable_ArrayColField(val []string) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
+		Name: "testarr",
+		Value: val,
 	}
 }
 
