@@ -330,7 +330,7 @@ func parseFieldTypeName(name, rootPkgPath string) (importPackages []string, type
 	genericTypeRegex := re.MustCompile(`^(.*?)(\[(.*)\])?$`)
 	genericMatches := genericTypeRegex.FindStringSubmatch(name)
 
-	rgx := re.MustCompile(`^(\[\])?(\*)?(.*/(.*))\.(.*)$`)
+	rgx := re.MustCompile(`^(\[\])?(\*)?((?:.*/)?(.*))\.(.*)$`)
 	matches := rgx.FindStringSubmatch(genericMatches[1])
 	// basic types: int, string, etc
 	if len(matches) == 0 {

@@ -1,6 +1,8 @@
 package eywatest
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/imperfect-fourth/eywa"
 )
@@ -18,6 +20,7 @@ type testTable struct {
 	Status     eywa.Enum[status]        `json:"status"`
 	Generic    GenericType[string, int] `json:"generic_type"`
 	ArrayCol   []string                 `json:"testarr"`
+	timestamp  time.Time                `json:"timestamp"`
 }
 
 type status string

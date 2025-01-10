@@ -2,10 +2,11 @@
 package eywatest
 
 import (
-	"bytes"
 	"github.com/google/uuid"
 	"github.com/imperfect-fourth/eywa"
 	"fmt"
+	"bytes"
+	"time"
 )
 
 
@@ -155,6 +156,21 @@ func testTable_ArrayColField(val []string) eywa.Field[testTable] {
 	return eywa.Field[testTable]{
 		Name: "testarr",
 		Value: val,
+	}
+}
+const testTable_timestamp eywa.FieldName[testTable] = "timestamp"
+
+func testTable_timestampField(val time.Time) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
+		Name: "timestamp",
+		Value: val,
+	}
+}
+
+func testTable_timestampVar[T interface{eywa.JSONValue | eywa.JSONBValue;eywa.TypedValue}](val time.Time) eywa.Field[testTable] {
+	return eywa.Field[testTable]{
+		Name: "timestamp",
+		Value: eywa.QueryVar("testTable_timestamp", T{val}),
 	}
 }
 
