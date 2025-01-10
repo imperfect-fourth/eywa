@@ -28,6 +28,9 @@ func (qa queryArgs[M]) MarshalGQL() string {
 	args = appendArg(args, qa.object)
 	args = appendArg(args, qa.onConflict)
 
+	if len(args) == 0 {
+		return ""
+	}
 	return fmt.Sprintf("(%s)", strings.Join(args, ", "))
 }
 

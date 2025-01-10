@@ -10,6 +10,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestSelectQuerySimple(t *testing.T) {
+	q := eywa.Get[testTable]().Select(testTable_Name)
+
+	expected := `query get_test_table {
+test_table {
+name
+}
+}`
+	assert.Equal(t, expected, q.Query())
+}
 func TestSelectQuery(t *testing.T) {
 	age := 10
 	q := eywa.Get[testTable]().Limit(2).Offset(1).DistinctOn(testTable_Name).OrderBy(
