@@ -79,3 +79,29 @@ func (c *Client) Do(ctx context.Context, q Queryable) (*bytes.Buffer, error) {
 	_, err = io.Copy(&respBytes, resp.Body)
 	return &respBytes, err
 }
+
+// Raw performs a gql query and returns the raw http response and error from the underlying http client.
+// Make sure to close the response body.
+func (c *Client) Raw(ctx context.Context, q Queryable) (*http.Response, error) {
+	reqObj := graphqlRequest{
+		Query:     q.Query(),
+		Variables: q.Variables(),
+	}
+
+	var reqBytes bytes.Buffer
+	err := json.NewEncoder(&reqBytes).Encode(&reqObj)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint, &reqBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	for key, value := range c.headers {
+		req.Header.Add(key, value)
+	}
+
+	return c.httpClient.Do(req)
+}
