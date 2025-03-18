@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -41,28 +42,14 @@ func NewClient(gqlEndpoint string, opt *ClientOpts) *Client {
 	return c
 }
 
+var (
+	ErrHTTPRedirect     = errors.New("redirected request with http status code")
+	ErrHTTPFailedStatus = errors.New("error response with http status code")
+)
+
+// Do performs a gql query and returns early if faced with a non-successful http status code.
 func (c *Client) Do(ctx context.Context, q Queryable) (*bytes.Buffer, error) {
-	reqObj := graphqlRequest{
-		Query:     q.Query(),
-		Variables: q.Variables(),
-	}
-
-	var reqBytes bytes.Buffer
-	err := json.NewEncoder(&reqBytes).Encode(&reqObj)
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint, &reqBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", "application/json")
-	for key, value := range c.headers {
-		req.Header.Add(key, value)
-	}
-
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Raw(ctx, q)
 	if err != nil {
 		return nil, err
 	}
@@ -70,9 +57,9 @@ func (c *Client) Do(ctx context.Context, q Queryable) (*bytes.Buffer, error) {
 
 	switch {
 	case resp.StatusCode > 299 && resp.StatusCode < 399:
-		return nil, fmt.Errorf("redirected request with http status code: %d", resp.StatusCode)
+		return nil, fmt.Errorf("%w: %d", ErrHTTPRedirect, resp.StatusCode)
 	case resp.StatusCode > 399:
-		return nil, fmt.Errorf("error response with http status code: %d", resp.StatusCode)
+		return nil, fmt.Errorf("%w: %d", ErrHTTPFailedStatus, resp.StatusCode)
 	}
 
 	var respBytes bytes.Buffer

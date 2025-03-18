@@ -3,6 +3,7 @@ package eywa_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -22,6 +23,82 @@ func (m *MockQuerable) Query() string {
 
 func (m *MockQuerable) Variables() map[string]interface{} {
 	return m.Vars
+}
+
+func TestDoClient(t *testing.T) {
+	tt := []struct {
+		name             string
+		server           *httptest.Server
+		expectedErr      error
+		expectedResponse []byte
+	}{
+		{
+			name: "Valid GQL response",
+			server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"data": {"test": "test"}}`))
+			})),
+			expectedResponse: []byte(`{"data": {"test": "test"}}`),
+		},
+		{
+			name: "A 401 response",
+			server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte(`{"error": {"message": "unauthorized"}}`))
+			})),
+			expectedErr: eywa.ErrHTTPFailedStatus,
+		},
+		{
+			name: "A 403 response",
+			server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte(`{"error": {"message": "forbidden"}}`))
+			})),
+			expectedErr: eywa.ErrHTTPFailedStatus,
+		},
+		{
+			name: "A 503 non-json response",
+			server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusServiceUnavailable)
+				w.Write([]byte(`Service unavailable`))
+			})),
+			expectedErr: eywa.ErrHTTPFailedStatus,
+		},
+		{
+			name: "A 301 Redirect",
+			server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusMovedPermanently)
+				w.Write([]byte(`Moved Permanently`))
+			})),
+			expectedErr: eywa.ErrHTTPRedirect,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			gqlClient := eywa.NewClient(tc.server.URL, nil)
+			resp, err := gqlClient.Do(context.TODO(), &MockQuerable{})
+			if err != nil && tc.expectedErr == nil {
+				t.Errorf("Expected no error, got %v", err)
+				return
+			}
+			if err == nil && tc.expectedErr != nil {
+				t.Errorf("Expected error %v, got nil", tc.expectedErr)
+				return
+			}
+			if err != nil && tc.expectedErr != nil {
+				if !errors.Is(err, tc.expectedErr) {
+					t.Errorf("Expected error %v, got %v", tc.expectedErr, err)
+					return
+				}
+				return
+			}
+			if !bytes.Equal(tc.expectedResponse, resp.Bytes()) {
+				t.Errorf("Expected response %s, got %s", string(tc.expectedResponse), resp.String())
+				return
+			}
+		})
+	}
 }
 
 func TestRawClient(t *testing.T) {
