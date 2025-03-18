@@ -49,6 +49,13 @@ func TestDoClient(t *testing.T) {
 			expectedErr: eywa.ErrHTTPFailedStatus,
 		},
 		{
+			name: "A 401 status with no response",
+			server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusUnauthorized)
+			})),
+			expectedErr: eywa.ErrHTTPFailedStatus,
+		},
+		{
 			name: "A 403 response",
 			server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusUnauthorized)
