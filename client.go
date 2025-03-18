@@ -55,15 +55,16 @@ func (c *Client) Do(ctx context.Context, q Queryable) (*bytes.Buffer, error) {
 	}
 	defer resp.Body.Close()
 
-	switch {
-	case resp.StatusCode > 299 && resp.StatusCode < 399:
-		return nil, fmt.Errorf("%w: %d", ErrHTTPRedirect, resp.StatusCode)
-	case resp.StatusCode > 399:
-		return nil, fmt.Errorf("%w: %d", ErrHTTPFailedStatus, resp.StatusCode)
-	}
-
 	var respBytes bytes.Buffer
 	_, err = io.Copy(&respBytes, resp.Body)
+
+	switch {
+	case resp.StatusCode > 299 && resp.StatusCode < 399:
+		err = fmt.Errorf("%w: %d", ErrHTTPRedirect, resp.StatusCode)
+	case resp.StatusCode > 399:
+		err = fmt.Errorf("%w: %d", ErrHTTPFailedStatus, resp.StatusCode)
+	}
+
 	return &respBytes, err
 }
 
