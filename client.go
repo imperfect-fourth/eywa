@@ -43,8 +43,8 @@ func NewClient(gqlEndpoint string, opt *ClientOpts) *Client {
 }
 
 var (
-	ErrHTTPRedirect     = errors.New("http request redirected")
-	ErrHTTPRequestFailed = errors.New("http request failed")
+	ErrHTTPRequestRedirect = errors.New("http request redirected")
+	ErrHTTPRequestFailed   = errors.New("http request failed")
 )
 
 // Do performs a gql query and returns early if faced with a non-successful http status code.
@@ -60,9 +60,9 @@ func (c *Client) Do(ctx context.Context, q Queryable) (*bytes.Buffer, error) {
 
 	switch {
 	case resp.StatusCode > 299 && resp.StatusCode < 399:
-		err = fmt.Errorf("%w: %d", ErrHTTPRedirect, resp.StatusCode)
+		err = fmt.Errorf("%w: %d", ErrHTTPRequestRedirect, resp.StatusCode)
 	case resp.StatusCode > 399:
-		err = fmt.Errorf("%w: %d", ErrHTTPFailedStatus, resp.StatusCode)
+		err = fmt.Errorf("%w: %d", ErrHTTPRequestFailed, resp.StatusCode)
 	}
 
 	return &respBytes, err

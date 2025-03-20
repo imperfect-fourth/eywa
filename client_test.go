@@ -46,14 +46,14 @@ func TestDoClient(t *testing.T) {
 				w.WriteHeader(http.StatusUnauthorized)
 				w.Write([]byte(`{"error": {"message": "unauthorized"}}`))
 			})),
-			expectedErr: eywa.ErrHTTPFailedStatus,
+			expectedErr: eywa.ErrHTTPRequestFailed,
 		},
 		{
 			name: "A 401 status with no response",
 			server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusUnauthorized)
 			})),
-			expectedErr: eywa.ErrHTTPFailedStatus,
+			expectedErr: eywa.ErrHTTPRequestFailed,
 		},
 		{
 			name: "A 403 response",
@@ -61,7 +61,7 @@ func TestDoClient(t *testing.T) {
 				w.WriteHeader(http.StatusUnauthorized)
 				w.Write([]byte(`{"error": {"message": "forbidden"}}`))
 			})),
-			expectedErr: eywa.ErrHTTPFailedStatus,
+			expectedErr: eywa.ErrHTTPRequestFailed,
 		},
 		{
 			name: "A 503 non-json response",
@@ -69,7 +69,7 @@ func TestDoClient(t *testing.T) {
 				w.WriteHeader(http.StatusServiceUnavailable)
 				w.Write([]byte(`Service unavailable`))
 			})),
-			expectedErr: eywa.ErrHTTPFailedStatus,
+			expectedErr: eywa.ErrHTTPRequestFailed,
 		},
 		{
 			name: "A 301 Redirect",
@@ -77,7 +77,7 @@ func TestDoClient(t *testing.T) {
 				w.WriteHeader(http.StatusMovedPermanently)
 				w.Write([]byte(`Moved Permanently`))
 			})),
-			expectedErr: eywa.ErrHTTPRedirect,
+			expectedErr: eywa.ErrHTTPRequestRedirect,
 		},
 	}
 
