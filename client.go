@@ -43,8 +43,8 @@ func NewClient(gqlEndpoint string, opt *ClientOpts) *Client {
 }
 
 var (
-	ErrHTTPRedirect     = errors.New("redirected request with http status code")
-	ErrHTTPFailedStatus = errors.New("error response with http status code")
+	ErrHTTPRedirect     = errors.New("http request redirected")
+	ErrHTTPRequestFailed = errors.New("http request failed")
 )
 
 // Do performs a gql query and returns early if faced with a non-successful http status code.
