@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -41,7 +42,35 @@ func NewClient(gqlEndpoint string, opt *ClientOpts) *Client {
 	return c
 }
 
+var (
+	ErrHTTPRequestRedirect = errors.New("http request redirected")
+	ErrHTTPRequestFailed   = errors.New("http request failed")
+)
+
+// Do performs a gql query and returns early if faced with a non-successful http status code.
 func (c *Client) Do(ctx context.Context, q Queryable) (*bytes.Buffer, error) {
+	resp, err := c.Raw(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var respBytes bytes.Buffer
+	_, err = io.Copy(&respBytes, resp.Body)
+
+	switch {
+	case resp.StatusCode > 299 && resp.StatusCode < 399:
+		err = fmt.Errorf("%w: %d", ErrHTTPRequestRedirect, resp.StatusCode)
+	case resp.StatusCode > 399:
+		err = fmt.Errorf("%w: %d", ErrHTTPRequestFailed, resp.StatusCode)
+	}
+
+	return &respBytes, err
+}
+
+// Raw performs a gql query and returns the raw http response and error from the underlying http client.
+// Make sure to close the response body.
+func (c *Client) Raw(ctx context.Context, q Queryable) (*http.Response, error) {
 	reqObj := graphqlRequest{
 		Query:     q.Query(),
 		Variables: q.Variables(),
@@ -62,20 +91,5 @@ func (c *Client) Do(ctx context.Context, q Queryable) (*bytes.Buffer, error) {
 		req.Header.Add(key, value)
 	}
 
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	switch {
-	case resp.StatusCode > 299 && resp.StatusCode < 399:
-		return nil, fmt.Errorf("redirected request with http status code: %d", resp.StatusCode)
-	case resp.StatusCode > 399:
-		return nil, fmt.Errorf("error response with http status code: %d", resp.StatusCode)
-	}
-
-	var respBytes bytes.Buffer
-	_, err = io.Copy(&respBytes, resp.Body)
-	return &respBytes, err
+	return c.httpClient.Do(req)
 }
