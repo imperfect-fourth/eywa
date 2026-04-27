@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 )
 
-type Client struct {
+type Client[QR QueryRoot, MR MutationRoot] struct {
 	endpoint   string
 	httpClient *http.Client
 	headers    map[string]string
@@ -23,62 +22,66 @@ type ClientOpts struct {
 
 // NewClient accepts a graphql endpoint and returns back a Client.
 // It uses the http.DefaultClient as the underlying http client by default.
-func NewClient(gqlEndpoint string, opt *ClientOpts) *Client {
-	c := &Client{
+func NewClient[QR QueryRoot, MR MutationRoot](gqlEndpoint string, opts *ClientOpts) *Client[QR, MR] {
+	c := &Client[QR, MR]{
 		endpoint:   gqlEndpoint,
 		httpClient: http.DefaultClient,
 	}
 
-	if opt != nil {
-		if opt.HTTPClient != nil {
-			c.httpClient = opt.HTTPClient
-		}
-
-		if len(opt.Headers) > 0 {
-			c.headers = opt.Headers
-		}
+	if opts == nil {
+		return c
 	}
 
+	if opts.HTTPClient != nil {
+		c.httpClient = opts.HTTPClient
+	}
+	if len(opts.Headers) > 0 {
+		c.headers = opts.Headers
+	}
 	return c
 }
 
-var (
-	ErrHTTPRequestRedirect = errors.New("http request redirected")
-	ErrHTTPRequestFailed   = errors.New("http request failed")
-)
-
-// Do performs a gql query and returns early if faced with a non-successful http status code.
-func (c *Client) Do(ctx context.Context, q Queryable) (*bytes.Buffer, error) {
-	resp, err := c.Raw(ctx, q)
+func (c *Client[QR, MR]) Query(ctx context.Context, operationName string, fields ...*Field[QR]) (*Response[QR], error) {
+	resp, err := c.Do(ctx, Request{
+		OperationName: operationName,
+		Query:         fmt.Sprintf("query %s %s", operationName, marshalGQLFields(fields)),
+	})
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	var respBytes bytes.Buffer
-	_, err = io.Copy(&respBytes, resp.Body)
-
-	switch {
-	case resp.StatusCode > 299 && resp.StatusCode < 399:
-		err = fmt.Errorf("%w: %d", ErrHTTPRequestRedirect, resp.StatusCode)
-	case resp.StatusCode > 399:
-		err = fmt.Errorf("%w: %d", ErrHTTPRequestFailed, resp.StatusCode)
+	if resp.StatusCode > 399 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("http response failed with status %d: %s", resp.StatusCode, body)
 	}
-
-	return &respBytes, err
+	var gqlresp Response[QR]
+	err = json.NewDecoder(resp.Body).Decode(&gqlresp)
+	return &gqlresp, err
 }
 
-// Raw performs a gql query and returns the raw http response and error from the underlying http client.
-// Make sure to close the response body.
-func (c *Client) Raw(ctx context.Context, q Queryable) (*http.Response, error) {
-	reqObj := graphqlRequest{
-		Query:     q.Query(),
-		Variables: q.Variables(),
-	}
-
-	var reqBytes bytes.Buffer
-	err := json.NewEncoder(&reqBytes).Encode(&reqObj)
+func (c *Client[QR, MR]) Mutation(ctx context.Context, operationName string, fields ...*Field[QR]) (*Response[MR], error) {
+	resp, err := c.Do(ctx, Request{
+		OperationName: operationName,
+		Query:         fmt.Sprintf("mutation %s %s", operationName, marshalGQLFields(fields)),
+	})
 	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode > 399 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("http response failed with status %d: %s", resp.StatusCode, body)
+	}
+	var gqlresp Response[MR]
+	err = json.NewDecoder(resp.Body).Decode(&gqlresp)
+	return &gqlresp, err
+}
+
+func (c *Client[QR, MR]) Do(ctx context.Context, gqlreq Request) (*http.Response, error) {
+	var reqBytes bytes.Buffer
+	if err := json.NewEncoder(&reqBytes).Encode(gqlreq); err != nil {
 		return nil, err
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint, &reqBytes)
@@ -92,4 +95,19 @@ func (c *Client) Raw(ctx context.Context, q Queryable) (*http.Response, error) {
 	}
 
 	return c.httpClient.Do(req)
+}
+
+type Request struct {
+	OperationName string `json:"operationName"`
+	Query         string `json:"query"`
+}
+
+type Response[R root] struct {
+	Data   R       `json:"data"`
+	Errors []Error `json:"errors"`
+}
+
+type Error struct {
+	Message    string         `json:"message"`
+	Extensions map[string]any `json:"extensions"`
 }
